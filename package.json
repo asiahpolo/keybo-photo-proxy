@@ -3,11 +3,7 @@
   "version": "1.0.0",
   "description": "Photo proxy for keybo.ai",
   "main": "api/photo.js",
-  "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build",
-    "deploy": "vercel --prod"
-  },
+  "scripts": {},
   "dependencies": {},
   "devDependencies": {}
 }
