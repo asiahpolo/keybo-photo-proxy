@@ -24,7 +24,8 @@ export default async function handler(req, res) {
     const content = await response.text();
     const contentType = response.headers.get('content-type') || 'text/html; charset=utf-8';
     
-    res.setHeader('Content-Type', contentType);
+    // Force HTML content type for proper rendering
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(content);
   } catch (error) {
     console.error('Proxy error:', error);
