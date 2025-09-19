@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/photo.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/photo",
+      "destination": "/api/photo"
+    }
+  ]
+}
