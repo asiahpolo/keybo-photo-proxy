@@ -1,0 +1,16 @@
+[build]
+  functions = "api"
+  
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/*"
+  to = "/api/photo?token=:splat"
+  status = 200
+  conditions = {path = ["~^/[a-zA-Z0-9]{6,32}$"]}
+
+[[redirects]]
+  from = "/photo"
+  to = "/api/photo"
+  status = 200

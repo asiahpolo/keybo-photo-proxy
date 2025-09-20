@@ -3,6 +3,10 @@
     {
       "source": "/photo",
       "destination": "/api/photo"
+    },
+    {
+      "source": "/([a-zA-Z0-9]{6,32})",
+      "destination": "/api/photo?token=$1"
     }
   ]
 }
