@@ -5,8 +5,8 @@
       "destination": "/api/photo"
     },
     {
-      "source": "/([a-zA-Z0-9]{4,8})",
-      "destination": "https://rfylaeapulczgqrrcicy.supabase.co/functions/v1/secure-photo?token=$1"
+      "source": "/:token",
+      "destination": "/api/proxy?token=:token"
     }
   ]
 }
