@@ -21,17 +21,11 @@ export default async function handler(req, res) {
     // Get the response body
     const body = await response.text();
     
-    // Forward the status code
-    res.status(response.status);
+    // Set HTML content type explicitly
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     
-    // Forward important headers
-    const contentType = response.headers.get('content-type');
-    if (contentType) {
-      res.setHeader('Content-Type', contentType);
-    }
-    
-    // Send the response
-    res.send(body);
+    // Forward the status code and send response
+    res.status(response.status).send(body);
   } catch (error) {
     console.error('Proxy error:', error);
     res.status(500).send('Internal server error');
