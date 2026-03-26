@@ -23,10 +23,14 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log(`[PHOTO] Token: ${token}, Length: ${token.length}`);
+    
     // Query database to find photo by either short_token or share_token
     const query = token.length <= 6 
       ? `short_token=eq.${token}`
       : `share_token=eq.${token}`;
+    
+    console.log(`[PHOTO] Query: ${query}`);
     
     const dbResponse = await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?${query}&select=photo_id,expires_at`, {
       headers: {
@@ -38,23 +42,29 @@ export default async function handler(req, res) {
 
     if (!dbResponse.ok) {
       const errorText = await dbResponse.text();
+      console.log(`[PHOTO] DB Error: ${dbResponse.status} - ${errorText}`);
       return res.status(404).json({ error: 'Photo not found', debug: errorText });
     }
 
     const shares = await dbResponse.json();
+    console.log(`[PHOTO] Shares found: ${shares.length}`, shares);
     
     if (!shares || shares.length === 0) {
+      console.log(`[PHOTO] No shares found for token: ${token}`);
       return res.status(404).json({ error: 'Photo not found' });
     }
 
     const share = shares[0];
+    console.log(`[PHOTO] Share record: ${JSON.stringify(share)}`);
     
     // Check if expired
     if (new Date(share.expires_at) < new Date()) {
+      console.log(`[PHOTO] Link expired: ${share.expires_at}`);
       return res.status(410).json({ error: 'Photo link has expired' });
     }
 
     // Get photo details
+    console.log(`[PHOTO] Looking up photo with ID: ${share.photo_id}`);
     const photoResponse = await fetch(`${SUPABASE_URL}/rest/v1/photos?id=eq.${share.photo_id}&select=storage_path`, {
       headers: {
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
@@ -64,12 +74,16 @@ export default async function handler(req, res) {
     });
 
     if (!photoResponse.ok) {
-      return res.status(404).json({ error: 'Photo not found' });
+      const photoErrorText = await photoResponse.text();
+      console.log(`[PHOTO] Photo lookup error: ${photoResponse.status} - ${photoErrorText}`);
+      return res.status(404).json({ error: 'Photo not found', debug: photoErrorText });
     }
 
     const photos = await photoResponse.json();
+    console.log(`[PHOTO] Photos found: ${photos.length}`, photos);
     
     if (!photos || photos.length === 0) {
+      console.log(`[PHOTO] No photos found with ID: ${share.photo_id}`);
       return res.status(404).json({ error: 'Photo not found' });
     }
 
