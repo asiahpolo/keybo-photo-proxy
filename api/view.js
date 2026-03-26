@@ -18,8 +18,8 @@ export default async function handler(req, res) {
     
     const dbResponse = await fetch(dbUrl, {
       headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'apikey': SUPABASE_SERVICE_KEY,
         'Content-Type': 'application/json'
       }
     });
