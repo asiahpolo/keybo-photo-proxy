@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const { token } = req.query;
   
   if (!token) {
-    return res.status(400).json({ error: 'Token required' });
+    return res.status(400).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px">Token required</body></html>');
   }
 
   try {
@@ -20,25 +20,25 @@ export default async function handler(req, res) {
     });
 
     if (!dbResponse.ok) {
-      return res.status(404).json({ error: 'Photo not found' });
+      return res.status(404).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Photo Not Found</h1><p>This link may have expired or is invalid</p></body></html>');
     }
 
     const shares = await dbResponse.json();
     
     if (!shares || shares.length === 0) {
-      return res.status(404).json({ error: 'Photo not found' });
+      return res.status(404).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Photo Not Found</h1><p>This link may have expired or is invalid</p></body></html>');
     }
 
     const share = shares[0];
     
     // Check if expired
     if (new Date(share.expires_at) < new Date()) {
-      return res.status(410).json({ error: 'Photo link has expired' });
+      return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link has expired</p></body></html>');
     }
     
     // Check if max views reached
     if (share.current_views >= share.max_views) {
-      return res.status(410).json({ error: 'Maximum views reached' });
+      return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Used</h1><p>This link has already been viewed</p></body></html>');
     }
     
     // Check if 1 minute has passed since first view
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       const now = new Date();
       const minutesPassed = (now - firstViewTime) / 1000 / 60;
       if (minutesPassed > 1) {
-        return res.status(410).json({ error: 'Link expired after 1 minute' });
+        return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This link expired after 1 minute</p></body></html>');
       }
     }
 
