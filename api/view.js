@@ -10,8 +10,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log(`[VIEW] Token: ${token}`);
+    
     // Query database to find photo by token
-    const dbResponse = await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?short_token=eq.${token}&select=photo_id,expires_at,current_views,max_views,first_viewed_at`, {
+    const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?short_token=eq.${token}&select=photo_id,expires_at,current_views,max_views,first_viewed_at`;
+    console.log(`[VIEW] Query URL: ${dbUrl}`);
+    
+    const dbResponse = await fetch(dbUrl, {
       headers: {
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         'apikey': SUPABASE_ANON_KEY,
@@ -19,13 +24,19 @@ export default async function handler(req, res) {
       }
     });
 
+    console.log(`[VIEW] DB Response status: ${dbResponse.status}`);
+    
     if (!dbResponse.ok) {
+      const errorText = await dbResponse.text();
+      console.log(`[VIEW] DB Error: ${errorText}`);
       return res.status(404).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Photo Not Found</h1><p>This link may have expired or is invalid</p></body></html>');
     }
 
     const shares = await dbResponse.json();
+    console.log(`[VIEW] Shares found: ${shares.length}`, shares);
     
     if (!shares || shares.length === 0) {
+      console.log(`[VIEW] No shares found for token: ${token}`);
       return res.status(404).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Photo Not Found</h1><p>This link may have expired or is invalid</p></body></html>');
     }
 
