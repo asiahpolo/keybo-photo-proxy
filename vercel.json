@@ -6,7 +6,7 @@
     },
     {
       "source": "/:token",
-      "destination": "/api/proxy?token=:token"
+      "destination": "/api/view?token=:token"
     }
   ]
 }
