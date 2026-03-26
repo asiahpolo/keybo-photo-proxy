@@ -88,9 +88,14 @@ export default async function handler(req, res) {
     }
 
     const photo = photos[0];
+    console.log(`[PHOTO] Photo record: ${JSON.stringify(photo)}`);
+    console.log(`[PHOTO] Storage path: ${photo.storage_path}`);
     
     // Get the photo data directly from Supabase Storage
-    const storageResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/photos/${photo.storage_path}`, {
+    const storageUrl = `${SUPABASE_URL}/storage/v1/object/photos/${photo.storage_path}`;
+    console.log(`[PHOTO] Fetching from storage: ${storageUrl}`);
+    
+    const storageResponse = await fetch(storageUrl, {
       headers: {
         'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
         'apikey': SUPABASE_SERVICE_KEY
@@ -98,8 +103,13 @@ export default async function handler(req, res) {
     });
 
     if (!storageResponse.ok) {
-      return res.status(500).json({ error: 'Failed to load photo' });
+      console.log(`[PHOTO] Storage fetch failed: ${storageResponse.status}`);
+      const storageError = await storageResponse.text();
+      console.log(`[PHOTO] Storage error: ${storageError}`);
+      return res.status(500).json({ error: 'Failed to load photo', debug: storageError });
     }
+    
+    console.log(`[PHOTO] Storage fetch successful`);
 
     // Get the photo data as buffer
     const photoBuffer = await storageResponse.arrayBuffer();
