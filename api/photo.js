@@ -1,11 +1,22 @@
 // Vercel serverless function for sp.keybo.ai photo sharing
 // Handles both short tokens (6 chars) and long tokens (32+ chars)
 
-const SUPABASE_URL = 'https://rfylaeapulczgqrrcicy.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmeWxhZWFwdWxjemducXJyY2ljeSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzI2NjQ3NzUxLCJleHAiOjIwNDIyMjM3NTF9.Ik_bJmhzJJHBCUUKvGUaJVJGKFhOdOhHwPvGvOvJhwE';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rfylaeapulczgqrrcicy.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_DwskAb_cvJJknLJMHGWmvA_Q4arXIbp';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 export default async function handler(req, res) {
   const { token } = req.query;
+  
+  // Test endpoint
+  if (token === 'test') {
+    return res.status(200).json({ 
+      message: 'Vercel API is working',
+      timestamp: new Date().toISOString(),
+      url: req.url,
+      query: req.query
+    });
+  }
   
   if (!token) {
     return res.status(400).json({ error: 'Token required' });
@@ -26,7 +37,8 @@ export default async function handler(req, res) {
     });
 
     if (!dbResponse.ok) {
-      return res.status(404).json({ error: 'Photo not found' });
+      const errorText = await dbResponse.text();
+      return res.status(404).json({ error: 'Photo not found', debug: errorText });
     }
 
     const shares = await dbResponse.json();
@@ -63,27 +75,30 @@ export default async function handler(req, res) {
 
     const photo = photos[0];
     
-    // Get signed URL from Supabase Storage
-    const storageResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/photos/${photo.storage_path}`, {
-      method: 'POST',
+    // Get the photo data directly from Supabase Storage
+    const storageResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/photos/${photo.storage_path}`, {
       headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'apikey': SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        expiresIn: 3600 // 1 hour
-      })
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'apikey': SUPABASE_SERVICE_KEY
+      }
     });
 
     if (!storageResponse.ok) {
-      return res.status(500).json({ error: 'Failed to generate photo URL' });
+      return res.status(500).json({ error: 'Failed to load photo' });
     }
 
-    const storageData = await storageResponse.json();
+    // Get the photo data as buffer
+    const photoBuffer = await storageResponse.arrayBuffer();
     
-    // Redirect to the actual photo
-    return res.redirect(302, `${SUPABASE_URL}${storageData.signedURL}`);
+    // Set appropriate headers for image display
+    const contentType = photo.storage_path.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+    
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Content-Length', photoBuffer.byteLength);
+    
+    // Send the photo data directly
+    return res.send(Buffer.from(photoBuffer));
     
   } catch (error) {
     console.error('Photo sharing error:', error);
