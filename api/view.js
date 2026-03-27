@@ -119,7 +119,7 @@ export default async function handler(req, res) {
             border-bottom: 3px solid rgba(255, 255, 255, 1);
             cursor: grab;
             z-index: 10;
-            transition: top 0.3s ease;
+            transition: top 0.3s ease, border-color 0.2s ease, box-shadow 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -129,6 +129,12 @@ export default async function handler(req, res) {
 
         .reveal-bar.no-animation {
             animation: none !important;
+        }
+
+        .reveal-bar.dragging {
+            border-top-color: transparent;
+            border-bottom-color: transparent;
+            box-shadow: none;
         }
 
         @keyframes demonstrateReveal {
