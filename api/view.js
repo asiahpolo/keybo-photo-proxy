@@ -1,7 +1,11 @@
 // Vercel serverless function for photo viewing with reveal bar
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rfylaeapulczgqrrcicy.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_DwskAb_cvJJknLJMHGWmvA_Q4arXIbp';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+// Use service key if available, otherwise fall back to anon key
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY;
+
+console.log(`[VIEW] Using SUPABASE_URL: ${SUPABASE_URL}`);
+console.log(`[VIEW] Service key available: ${!!process.env.SUPABASE_SERVICE_KEY}`);
 
 export default async function handler(req, res) {
   const { token } = req.query;
