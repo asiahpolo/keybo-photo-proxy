@@ -114,7 +114,7 @@ export default async function handler(req, res) {
             left: 0;
             width: 100%;
             height: 45px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
+            background: transparent;
             border-top: 3px solid rgba(255, 255, 255, 1);
             border-bottom: 3px solid rgba(255, 255, 255, 1);
             cursor: grab;
@@ -123,7 +123,7 @@ export default async function handler(req, res) {
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
             animation: demonstrateReveal 12s ease-in-out 1;
         }
 
@@ -132,6 +132,17 @@ export default async function handler(req, res) {
             25% { top: 25%; }
             50% { top: 0; }
             75% { top: 25%; }
+        }
+
+        .photo.animating {
+            animation: revealAnimation 12s ease-in-out 1;
+        }
+
+        @keyframes revealAnimation {
+            0%, 100% { clip-path: inset(0 0 calc(100% - 45px) 0); }
+            25% { clip-path: inset(0 0 calc(100% - 45px - 25%) 0); }
+            50% { clip-path: inset(0 0 calc(100% - 45px) 0); }
+            75% { clip-path: inset(0 0 calc(100% - 45px - 25%) 0); }
         }
 
         .reveal-bar.dragging {
@@ -297,6 +308,9 @@ export default async function handler(req, res) {
         let isDragging = false;
         let hasDragged = false;
 
+        // Start animation on page load
+        photo.classList.add('animating');
+
         function updateReveal(clientY) {
             const wrapperRect = photoWrapper.getBoundingClientRect();
             const barHeight = revealBar.offsetHeight;
@@ -324,6 +338,7 @@ export default async function handler(req, res) {
             trackInteraction();
             isDragging = true;
             revealBar.classList.add('dragging');
+            photo.classList.remove('animating');
             revealBar.style.cursor = 'grabbing';
             document.body.style.cursor = 'grabbing';
             photo.style.transition = 'none';
