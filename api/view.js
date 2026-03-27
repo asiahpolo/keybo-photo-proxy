@@ -115,15 +115,13 @@ export default async function handler(req, res) {
             width: 100%;
             height: 45px;
             background: transparent;
-            border-top: 3px solid rgba(255, 255, 255, 1);
-            border-bottom: 3px solid rgba(255, 255, 255, 1);
+            border: none;
             cursor: grab;
             z-index: 10;
-            transition: top 0.3s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            transition: top 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
             animation: demonstrateReveal 12s ease-in-out 1 forwards;
         }
 
@@ -132,9 +130,7 @@ export default async function handler(req, res) {
         }
 
         .reveal-bar.dragging {
-            border-top-color: transparent;
-            border-bottom-color: transparent;
-            box-shadow: none;
+            cursor: grabbing;
         }
 
         @keyframes demonstrateReveal {
