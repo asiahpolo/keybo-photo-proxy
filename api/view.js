@@ -140,9 +140,9 @@ export default async function handler(req, res) {
 
         @keyframes revealAnimation {
             0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 45px, 0 45px); }
-            25% { clip-path: polygon(0 0, 100% 0, 100% calc(45px + 25%), 0 calc(45px + 25%)); }
+            25% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 45px), 0 calc(25% + 45px)); }
             50% { clip-path: polygon(0 0, 100% 0, 100% 45px, 0 45px); }
-            75% { clip-path: polygon(0 0, 100% 0, 100% calc(45px + 25%), 0 calc(45px + 25%)); }
+            75% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 45px), 0 calc(25% + 45px)); }
         }
 
         .photo-wrapper {
