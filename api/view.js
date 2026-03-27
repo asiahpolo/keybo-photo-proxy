@@ -112,6 +112,7 @@ export default async function handler(req, res) {
             position: absolute;
             top: 0;
             left: 0;
+            right: 0;
             width: 100%;
             height: 45px;
             background: transparent;
@@ -330,9 +331,11 @@ export default async function handler(req, res) {
             const barHeight = revealBar.offsetHeight;
             const photoHeight = wrapperRect.height;
 
+            // Calculate position relative to wrapper's top edge
             let barTop = clientY - wrapperRect.top;
             barTop = Math.max(0, Math.min(photoHeight - barHeight, barTop));
 
+            // Set position relative to wrapper (which has position: relative)
             revealBar.style.top = barTop + 'px';
 
             // Use polygon to create a window that matches bar height exactly
