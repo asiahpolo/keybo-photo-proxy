@@ -334,10 +334,9 @@ export default async function handler(req, res) {
 
             revealBar.style.top = barTop + 'px';
 
-            const clipTop = barTop;
-            const clipBottom = photoHeight - (barTop + barHeight);
-
-            photo.style.clipPath = 'inset(' + clipTop + 'px 0 ' + clipBottom + 'px 0)';
+            // Use polygon to create a window that matches bar height exactly
+            const barBottom = barTop + barHeight;
+            photo.style.clipPath = 'polygon(0 ' + barTop + 'px, 100% ' + barTop + 'px, 100% ' + barBottom + 'px, 0 ' + barBottom + 'px)';
         }
 
         let hasInteracted = false;
