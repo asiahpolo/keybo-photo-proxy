@@ -152,6 +152,7 @@ export default async function handler(req, res) {
 
         .photo-wrapper {
             overflow: hidden;
+            position: relative;
         }
 
         .reveal-bar.dragging {
