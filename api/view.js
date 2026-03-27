@@ -112,7 +112,6 @@ export default async function handler(req, res) {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
             width: 100%;
             height: 45px;
             background: transparent;
@@ -153,8 +152,6 @@ export default async function handler(req, res) {
 
         .photo-wrapper {
             overflow: hidden;
-            position: relative;
-            will-change: transform;
         }
 
         .reveal-bar.dragging {
@@ -321,7 +318,6 @@ export default async function handler(req, res) {
         const guidance = document.getElementById('guidance');
         let isDragging = false;
         let hasDragged = false;
-        let lastClientY = 0;
 
         // Start animation on page load
         let animationStarted = false;
@@ -333,11 +329,9 @@ export default async function handler(req, res) {
             const barHeight = revealBar.offsetHeight;
             const photoHeight = wrapperRect.height;
 
-            // Calculate position relative to wrapper's top edge
             let barTop = clientY - wrapperRect.top;
             barTop = Math.max(0, Math.min(photoHeight - barHeight, barTop));
 
-            // Set position relative to wrapper (which has position: relative)
             revealBar.style.top = barTop + 'px';
 
             // Use polygon to create a window that matches bar height exactly
@@ -390,25 +384,16 @@ export default async function handler(req, res) {
         function onDrag(event) {
             if (!isDragging) return;
             const clientY = event.type === 'touchmove' ? event.touches[0].clientY : event.clientY;
-            lastClientY = clientY;
             updateReveal(clientY);
         }
 
-        // Listen for layout changes (e.g., Safari privacy warning banner)
-        const resizeObserver = new ResizeObserver(() => {
-            if (isDragging && lastClientY > 0) {
-                // Recalculate bar position with the last known client Y when layout changes
-                console.log('Layout changed, recalculating with lastClientY:', lastClientY);
-                updateReveal(lastClientY);
-            }
-        });
-        resizeObserver.observe(photoWrapper);
-
         revealBar.addEventListener('mousedown', startDrag);
         document.addEventListener('mouseup', endDrag);
-        document.addEventListener('touchstart', startDrag, { passive: false });
+        document.addEventListener('mousemove', onDrag);
+
+        revealBar.addEventListener('touchstart', startDrag);
         document.addEventListener('touchend', endDrag);
-        document.addEventListener('touchmove', onDrag, { passive: false });
+        document.addEventListener('touchmove', onDrag);
 
         // Countdown Timer (always 60s)
         let timeLeft = 60;
