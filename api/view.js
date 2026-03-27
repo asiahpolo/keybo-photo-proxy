@@ -82,25 +82,28 @@ export default async function handler(req, res) {
         .container {
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Align to top */
-            padding-top: 30px; /* Add 30px space at the top */
+            align-items: center;
             width: 100%;
             height: 100%;
+            flex-direction: column;
         }
 
         .photo-wrapper {
             position: relative;
-            width: 100%;
-            max-width: 500px;
+            max-height: 80vh;
+            aspect-ratio: auto;
             background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .photo {
             display: block;
-            width: 100%;
-            height: 100%;
+            max-height: 80vh;
+            width: auto;
             object-fit: contain;
-            clip-path: inset(0 0 calc(100% - 35px) 0); /* Initially reveal top slice */
+            clip-path: inset(0 0 calc(100% - 35px) 0);
             transition: clip-path 0.3s ease;
             image-rendering: -webkit-optimize-contrast;
         }
@@ -111,11 +114,23 @@ export default async function handler(req, res) {
             left: 0;
             width: 100%;
             height: 35px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
             border-top: 2px solid rgba(255, 255, 255, 0.9);
             border-bottom: 2px solid rgba(255, 255, 255, 0.9);
             cursor: grab;
             z-index: 10;
             transition: top 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reveal-bar::before {
+            content: '';
+            width: 40px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 2px;
         }
 
         .reveal-bar:active {
@@ -191,6 +206,17 @@ export default async function handler(req, res) {
             transform: translateX(-50%);
         }
 
+        .watermark a {
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .watermark a:hover {
+            opacity: 0.8;
+        }
+
         .expired {
             top: 50%;
             left: 50%;
@@ -198,12 +224,30 @@ export default async function handler(req, res) {
             text-align: center;
             display: none;
         }
+
+        .guidance {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            text-align: center;
+            pointer-events: none;
+            animation: fadeInOut 3s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="photo-wrapper">
             <img src="/api/photo?token=${token}" alt="Secure Photo" class="photo">
+            <div class="guidance" id="guidance">Drag the bar down to reveal photo</div>
             <div class="onboarding-hint" id="onboardingHint">
                 <span>Drag down to reveal</span>
                 <div class="arrows">
@@ -215,7 +259,7 @@ export default async function handler(req, res) {
             <div class="reveal-bar" id="revealBar"></div>
         </div>
         <div class="timer" id="timer">60s</div>
-        <div class="watermark">Shared via Keybo</div>
+        <div class="watermark"><a href="https://keybo.ai" target="_blank">Shared via Keybo</a></div>
         <div class="expired" id="expired"></div>
     </div>
 
@@ -226,6 +270,7 @@ export default async function handler(req, res) {
         const revealBar = document.getElementById('revealBar');
         const photoWrapper = document.querySelector('.photo-wrapper');
         const onboardingHint = document.getElementById('onboardingHint');
+        const guidance = document.getElementById('guidance');
         let isDragging = false;
         let hasDragged = false;
 
@@ -263,6 +308,7 @@ export default async function handler(req, res) {
             if (!hasDragged) {
                 hasDragged = true;
                 onboardingHint.style.opacity = '0';
+                guidance.style.opacity = '0';
             }
 
             if (event.type === 'touchstart') event.preventDefault();
