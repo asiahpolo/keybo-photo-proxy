@@ -349,6 +349,8 @@ export default async function handler(req, res) {
             revealBar.classList.add('dragging');
             // Permanently remove animation class so it never repeats
             photo.classList.remove('animating');
+            // Force remove animation by setting animation to none
+            photo.style.animation = 'none !important';
             animationStarted = false;
             revealBar.style.cursor = 'grabbing';
             document.body.style.cursor = 'grabbing';
