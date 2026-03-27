@@ -392,13 +392,21 @@ export default async function handler(req, res) {
             updateReveal(clientY);
         }
 
+        // Listen for layout changes (e.g., Safari privacy warning banner)
+        const resizeObserver = new ResizeObserver(() => {
+            if (isDragging) {
+                // Recalculate if dragging when layout changes
+                const wrapperRect = photoWrapper.getBoundingClientRect();
+                console.log('Layout changed during drag, wrapper top:', wrapperRect.top);
+            }
+        });
+        resizeObserver.observe(photoWrapper);
+
         revealBar.addEventListener('mousedown', startDrag);
         document.addEventListener('mouseup', endDrag);
-        document.addEventListener('mousemove', onDrag);
-
-        revealBar.addEventListener('touchstart', startDrag);
+        document.addEventListener('touchstart', startDrag, { passive: false });
         document.addEventListener('touchend', endDrag);
-        document.addEventListener('touchmove', onDrag);
+        document.addEventListener('touchmove', onDrag, { passive: false });
 
         // Countdown Timer (always 60s)
         let timeLeft = 60;
