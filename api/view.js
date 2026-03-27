@@ -124,7 +124,7 @@ export default async function handler(req, res) {
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
-            animation: demonstrateReveal 12s ease-in-out 1;
+            animation: demonstrateReveal 12s ease-in-out 1 forwards;
         }
 
         @keyframes demonstrateReveal {
@@ -139,10 +139,10 @@ export default async function handler(req, res) {
         }
 
         @keyframes revealAnimation {
-            0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 45px, 0 45px); }
-            25% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 45px), 0 calc(25% + 45px)); }
-            50% { clip-path: polygon(0 0, 100% 0, 100% 45px, 0 45px); }
-            75% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 45px), 0 calc(25% + 45px)); }
+            0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px); }
+            25% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 51px), 0 calc(25% + 51px)); }
+            50% { clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px); }
+            75% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 51px), 0 calc(25% + 51px)); }
         }
 
         .photo-wrapper {
@@ -160,6 +160,7 @@ export default async function handler(req, res) {
             border-radius: 3px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
             cursor: grab;
+            transition: opacity 0.2s ease;
         }
 
         .reveal-bar:active .reveal-bar-handle,
@@ -167,6 +168,7 @@ export default async function handler(req, res) {
             cursor: grabbing;
             background: rgba(255, 255, 255, 1);
             box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
+            opacity: 0;
         }
 
         .reveal-bar:active {
