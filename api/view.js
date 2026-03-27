@@ -135,14 +135,15 @@ export default async function handler(req, res) {
         }
 
         .photo.animating {
-            animation: revealAnimation 12s ease-in-out 1;
+            animation: revealAnimation 12s ease-in-out 1 forwards;
         }
 
         @keyframes revealAnimation {
-            0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px); }
+            0% { clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px); }
             25% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 51px), 0 calc(25% + 51px)); }
             50% { clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px); }
             75% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 51px), 0 calc(25% + 51px)); }
+            100% { clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px); }
         }
 
         .photo-wrapper {
@@ -315,7 +316,9 @@ export default async function handler(req, res) {
         let hasDragged = false;
 
         // Start animation on page load
+        let animationStarted = false;
         photo.classList.add('animating');
+        animationStarted = true;
 
         function updateReveal(clientY) {
             const wrapperRect = photoWrapper.getBoundingClientRect();
@@ -344,7 +347,9 @@ export default async function handler(req, res) {
             trackInteraction();
             isDragging = true;
             revealBar.classList.add('dragging');
+            // Permanently remove animation class so it never repeats
             photo.classList.remove('animating');
+            animationStarted = false;
             revealBar.style.cursor = 'grabbing';
             document.body.style.cursor = 'grabbing';
             photo.style.transition = 'none';
