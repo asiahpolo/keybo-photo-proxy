@@ -140,9 +140,13 @@ export default async function handler(req, res) {
 
         @keyframes revealAnimation {
             0%, 100% { clip-path: inset(0 0 calc(100% - 45px) 0); }
-            25% { clip-path: inset(0 0 calc(100% - 45px - 25%) 0); }
+            25% { clip-path: inset(0 0 calc(100% - 45px - 25% - 45px) 0); }
             50% { clip-path: inset(0 0 calc(100% - 45px) 0); }
-            75% { clip-path: inset(0 0 calc(100% - 45px - 25%) 0); }
+            75% { clip-path: inset(0 0 calc(100% - 45px - 25% - 45px) 0); }
+        }
+
+        .photo-wrapper {
+            overflow: hidden;
         }
 
         .reveal-bar.dragging {
