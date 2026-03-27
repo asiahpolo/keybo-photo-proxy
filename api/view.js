@@ -127,6 +127,10 @@ export default async function handler(req, res) {
             animation: demonstrateReveal 12s ease-in-out 1 forwards;
         }
 
+        .reveal-bar.no-animation {
+            animation: none !important;
+        }
+
         @keyframes demonstrateReveal {
             0%, 100% { top: 0; }
             25% { top: 25%; }
@@ -347,8 +351,9 @@ export default async function handler(req, res) {
             trackInteraction();
             isDragging = true;
             revealBar.classList.add('dragging');
-            // Add no-animation class to prevent animation from running
+            // Add no-animation class to both photo and reveal bar to prevent animation from running
             photo.classList.add('no-animation');
+            revealBar.classList.add('no-animation');
             revealBar.style.cursor = 'grabbing';
             document.body.style.cursor = 'grabbing';
             photo.style.transition = 'none';
