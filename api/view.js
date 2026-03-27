@@ -321,6 +321,7 @@ export default async function handler(req, res) {
         const guidance = document.getElementById('guidance');
         let isDragging = false;
         let hasDragged = false;
+        let lastClientY = 0;
 
         // Start animation on page load
         let animationStarted = false;
@@ -389,15 +390,16 @@ export default async function handler(req, res) {
         function onDrag(event) {
             if (!isDragging) return;
             const clientY = event.type === 'touchmove' ? event.touches[0].clientY : event.clientY;
+            lastClientY = clientY;
             updateReveal(clientY);
         }
 
         // Listen for layout changes (e.g., Safari privacy warning banner)
         const resizeObserver = new ResizeObserver(() => {
-            if (isDragging) {
-                // Recalculate if dragging when layout changes
-                const wrapperRect = photoWrapper.getBoundingClientRect();
-                console.log('Layout changed during drag, wrapper top:', wrapperRect.top);
+            if (isDragging && lastClientY > 0) {
+                // Recalculate bar position with the last known client Y when layout changes
+                console.log('Layout changed, recalculating with lastClientY:', lastClientY);
+                updateReveal(lastClientY);
             }
         });
         resizeObserver.observe(photoWrapper);
