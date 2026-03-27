@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     console.log(`[VIEW] Token: ${token}`);
     
     // Query database to find photo by token
-    const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?short_token=eq.${token}&select=photo_id,expires_at,current_views,max_views,first_viewed_at`;
+    const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?short_token=eq.${token}&select=photo_id,expires_at,is_active`;
     console.log(`[VIEW] Query URL: ${dbUrl}`);
     
     const dbResponse = await fetch(dbUrl, {
@@ -47,24 +47,14 @@ export default async function handler(req, res) {
 
     const share = shares[0];
     
+    // Check if link is active
+    if (!share.is_active) {
+      return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link is no longer active</p></body></html>');
+    }
+    
     // Check if expired
     if (new Date(share.expires_at) < new Date()) {
       return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link has expired</p></body></html>');
-    }
-    
-    // Check if max views reached
-    if (share.current_views >= share.max_views) {
-      return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Used</h1><p>This link has already been viewed</p></body></html>');
-    }
-    
-    // Check if 1 minute has passed since first view
-    if (share.first_viewed_at) {
-      const firstViewTime = new Date(share.first_viewed_at);
-      const now = new Date();
-      const minutesPassed = (now - firstViewTime) / 1000 / 60;
-      if (minutesPassed > 1) {
-        return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This link expired after 1 minute</p></body></html>');
-      }
     }
 
     // Return HTML page with reveal functionality
