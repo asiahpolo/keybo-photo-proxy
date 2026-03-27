@@ -134,7 +134,7 @@ export default async function handler(req, res) {
             75% { top: 25%; }
         }
 
-        .photo.animating {
+        .photo.animating:not(.no-animation) {
             animation: revealAnimation 12s ease-in-out 1 forwards;
         }
 
@@ -347,11 +347,8 @@ export default async function handler(req, res) {
             trackInteraction();
             isDragging = true;
             revealBar.classList.add('dragging');
-            // Permanently remove animation class so it never repeats
-            photo.classList.remove('animating');
-            // Force remove animation by setting animation to none
-            photo.style.animation = 'none !important';
-            animationStarted = false;
+            // Add no-animation class to prevent animation from running
+            photo.classList.add('no-animation');
             revealBar.style.cursor = 'grabbing';
             document.body.style.cursor = 'grabbing';
             photo.style.transition = 'none';
