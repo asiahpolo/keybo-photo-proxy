@@ -113,24 +113,43 @@ export default async function handler(req, res) {
             top: 0;
             left: 0;
             width: 100%;
-            height: 35px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-            border-top: 2px solid rgba(255, 255, 255, 0.9);
-            border-bottom: 2px solid rgba(255, 255, 255, 0.9);
+            height: 45px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(255,255,255,0.15));
+            border-top: 3px solid rgba(255, 255, 255, 0.95);
+            border-bottom: 3px solid rgba(255, 255, 255, 0.95);
             cursor: grab;
             z-index: 10;
             transition: top 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+            animation: demonstrateReveal 3s ease-in-out infinite;
         }
 
-        .reveal-bar::before {
-            content: '';
-            width: 40px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 2px;
+        @keyframes demonstrateReveal {
+            0%, 100% { top: 0; }
+            50% { top: 25%; }
+        }
+
+        .reveal-bar.dragging {
+            animation: none;
+        }
+
+        .reveal-bar-handle {
+            width: 50px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 3px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            cursor: grab;
+        }
+
+        .reveal-bar:active .reveal-bar-handle,
+        .reveal-bar.dragging .reveal-bar-handle {
+            cursor: grabbing;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
         }
 
         .reveal-bar:active {
@@ -256,7 +275,9 @@ export default async function handler(req, res) {
                     <div class="arrow"></div>
                 </div>
             </div>
-            <div class="reveal-bar" id="revealBar"></div>
+            <div class="reveal-bar" id="revealBar">
+                <div class="reveal-bar-handle"></div>
+            </div>
         </div>
         <div class="timer" id="timer">60s</div>
         <div class="watermark"><a href="https://keybo.ai" target="_blank">Shared via Keybo</a></div>
@@ -300,6 +321,7 @@ export default async function handler(req, res) {
         function startDrag(event) {
             trackInteraction();
             isDragging = true;
+            revealBar.classList.add('dragging');
             revealBar.style.cursor = 'grabbing';
             document.body.style.cursor = 'grabbing';
             photo.style.transition = 'none';
@@ -317,6 +339,7 @@ export default async function handler(req, res) {
         function endDrag() {
             if (!isDragging) return;
             isDragging = false;
+            revealBar.classList.remove('dragging');
             revealBar.style.cursor = 'grab';
             document.body.style.cursor = 'default';
 
