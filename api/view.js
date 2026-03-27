@@ -103,7 +103,7 @@ export default async function handler(req, res) {
             max-height: 80vh;
             width: auto;
             object-fit: contain;
-            clip-path: inset(0 0 calc(100% - 35px) 0);
+            clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px);
             transition: clip-path 0.3s ease;
             image-rendering: -webkit-optimize-contrast;
         }
