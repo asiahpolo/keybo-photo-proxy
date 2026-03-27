@@ -114,22 +114,24 @@ export default async function handler(req, res) {
             left: 0;
             width: 100%;
             height: 45px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(255,255,255,0.15));
-            border-top: 3px solid rgba(255, 255, 255, 0.95);
-            border-bottom: 3px solid rgba(255, 255, 255, 0.95);
+            background: linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
+            border-top: 3px solid rgba(255, 255, 255, 1);
+            border-bottom: 3px solid rgba(255, 255, 255, 1);
             cursor: grab;
             z-index: 10;
             transition: top 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
-            animation: demonstrateReveal 3s ease-in-out infinite;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+            animation: demonstrateReveal 12s ease-in-out 1;
         }
 
         @keyframes demonstrateReveal {
             0%, 100% { top: 0; }
-            50% { top: 25%; }
+            25% { top: 25%; }
+            50% { top: 0; }
+            75% { top: 25%; }
         }
 
         .reveal-bar.dragging {
