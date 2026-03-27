@@ -377,7 +377,8 @@ export default async function handler(req, res) {
             photo.style.transition = 'clip-path 0.3s ease';
             revealBar.style.transition = 'top 0.3s ease';
             revealBar.style.top = '0px';
-            photo.style.clipPath = 'inset(0 0 calc(100% - 35px) 0)';
+            // Use polygon to match bar height exactly (51px)
+            photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 51px, 0 51px)';
         }
 
         function onDrag(event) {
