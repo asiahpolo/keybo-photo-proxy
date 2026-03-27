@@ -387,11 +387,20 @@ export default async function handler(req, res) {
             updateReveal(clientY);
         }
 
+        // Allow dragging from anywhere on the screen
+        function startDragAnywhere(event) {
+            // Only start drag if not already dragging
+            if (isDragging) return;
+            startDrag(event);
+        }
+
         revealBar.addEventListener('mousedown', startDrag);
+        photoWrapper.addEventListener('mousedown', startDragAnywhere);
         document.addEventListener('mouseup', endDrag);
         document.addEventListener('mousemove', onDrag);
 
         revealBar.addEventListener('touchstart', startDrag);
+        photoWrapper.addEventListener('touchstart', startDragAnywhere);
         document.addEventListener('touchend', endDrag);
         document.addEventListener('touchmove', onDrag);
 
