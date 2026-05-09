@@ -15,6 +15,32 @@ export default async function handler(req, res) {
   }
 
   try {
+    const upstreamUrl = `${SUPABASE_URL}/functions/v1/secure-photo?token=${encodeURIComponent(token)}`;
+    const upstreamResponse = await fetch(upstreamUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': req.headers['user-agent'] || 'unknown',
+        'Accept': 'text/html',
+        'X-Forwarded-For': req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown'
+      }
+    });
+
+    const upstreamBody = await upstreamResponse.text();
+
+    res.status(upstreamResponse.status);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    const deployMarker = upstreamResponse.headers.get('x-secure-photo-deploy');
+    if (deployMarker) {
+      res.setHeader('X-Secure-Photo-Deploy', deployMarker);
+    }
+
+    return res.send(upstreamBody);
+
     console.log(`[VIEW] Token: ${token}`);
     
     // Query database to find photo by token
