@@ -14,8 +14,10 @@ export default async function handler(req, res) {
     return res.status(400).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px">Token required</body></html>');
   }
 
+  const normalizedToken = String(token).trim().toLowerCase();
+
   try {
-    const upstreamUrl = `${SUPABASE_URL}/functions/v1/secure-photo?token=${encodeURIComponent(token)}`;
+    const upstreamUrl = `${SUPABASE_URL}/functions/v1/secure-photo?token=${encodeURIComponent(normalizedToken)}`;
     const upstreamResponse = await fetch(upstreamUrl, {
       method: 'GET',
       headers: {
