@@ -103,7 +103,7 @@ export default async function handler(req, res) {
 <body>
     <div class="container">
         <h1>🔐 Secure Photo Sharing</h1>
-        <p>Share photos privately with a reveal bar — the recipient swipes to see the image. Links expire in 24 hours.</p>
+        <p>Share photos privately with a reveal bar — the recipient swipes to see the image. Links expire in 1 minute after opening.</p>
         
         <div class="demo-card">
             <img src="${DEMO_IMAGE_URL}" alt="Demo mountain landscape" class="demo-image">
