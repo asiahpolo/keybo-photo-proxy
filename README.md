@@ -1,5 +1,7 @@
 # Keybo.ai Photo Proxy
 
+**Demo URL**: `https://keybo.ai/demo` – opens the secure‑photo viewer using a fixed, non‑expiring share token.
+
 This Vercel project creates a proxy for Supabase photo URLs using your custom domain.
 
 ## Setup Steps
