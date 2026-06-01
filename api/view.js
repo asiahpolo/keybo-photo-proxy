@@ -165,8 +165,6 @@ body, html {
   object-fit: contain;
   animation: aggressiveFlicker 0.15s infinite;
   clip-path: polygon(0 0, 100% 0, 100% 36px, 0 36px);
-  transition: clip-path 0.1s linear;
-  will-change: clip-path, filter;
 }
 @keyframes aggressiveFlicker {
   0%, 100% { filter: brightness(1); }
@@ -320,7 +318,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1806-doublehint</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1810-sync</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
