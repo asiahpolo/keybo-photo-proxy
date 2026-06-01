@@ -175,8 +175,7 @@ body, html {
 .reveal-bar {
   position: absolute; top: 0; left: 0;
   width: 100%; height: 36px;
-  background: linear-gradient(to bottom, rgba(0,122,255,0.3), rgba(0,122,255,0.1));
-  border-bottom: 2px solid var(--primary);
+  background: transparent;
   z-index: 50;
   display: flex; justify-content: center; align-items: center;
   cursor: grab; touch-action: none;
@@ -184,21 +183,39 @@ body, html {
 .reveal-bar::after {
   content: ""; width: 40px; height: 4px;
   background: rgba(255,255,255,0.8); border-radius: 2px;
+  transition: opacity 0.2s ease;
 }
 .reveal-bar.dragging { cursor: grabbing; }
+.reveal-bar.dragging::after { opacity: 0; }
+
+/* Welcome demo animation */
+@keyframes welcomeReveal {
+  0% { top: 0; }
+  50% { top: 30%; }
+  100% { top: 0; }
+}
+.welcome-anim {
+  animation: welcomeReveal 1s ease-in-out;
+}
 
 .info-overlay {
   position: absolute; bottom: 20px; left: 50%;
   transform: translateX(-50%);
-  width: 90%; text-align: center;
+  width: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
   pointer-events: none; z-index: 60;
 }
 .status-pill {
   display: inline-block;
   background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
   padding: 8px 16px; border-radius: 20px;
-  font-size: 13px; margin-bottom: 12px;
+  font-size: 13px;
   border: 1px solid rgba(255,255,255,0.1);
+  white-space: nowrap;
 }
 .status-pill.expiry { color: #FF9500; font-weight: 500; }
 
@@ -254,7 +271,6 @@ body, html {
     </div>
     <div class="info-overlay" id="infoOverlay">
       <div class="status-pill expiry" id="expiryPill">Link expires in 60s</div>
-      <br>
       <div class="status-pill">One-time view only</div>
     </div>
   </main>
@@ -263,7 +279,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1755-snapback</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1759-transparent-welcome-row</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
@@ -335,6 +351,32 @@ body, html {
   window.addEventListener('touchstart', handleStart, { passive: false });
   window.addEventListener('touchmove', handleMove, { passive: false });
   window.addEventListener('touchend', handleEnd);
+
+  // Welcome animation: bar goes down then snaps back
+  (function welcomeAnimation() {
+    revealBar.classList.add('welcome-anim');
+    // Manually animate clip-path to match bar
+    photo.style.transition = 'clip-path 1s ease-in-out';
+    photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 36px, 0 36px)';
+    
+    // Halfway: reveal 30%
+    setTimeout(() => {
+      const containerHeight = container.getBoundingClientRect().height;
+      const barHeight = revealBar.offsetHeight;
+      const targetY = containerHeight * 0.3;
+      const endY = targetY + barHeight;
+      revealBar.style.top = targetY + 'px';
+      photo.style.clipPath = 'polygon(0 ' + targetY + 'px, 100% ' + targetY + 'px, 100% ' + endY + 'px, 0 ' + endY + 'px)';
+    }, 500);
+    
+    // End: snap back to top
+    setTimeout(() => {
+      revealBar.classList.remove('welcome-anim');
+      revealBar.style.top = '0px';
+      photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 36px, 0 36px)';
+      photo.style.transition = '';
+    }, 1000);
+  })();
 
   const countdown = setInterval(() => {
     timeLeft--;
