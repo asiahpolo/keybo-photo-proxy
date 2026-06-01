@@ -305,7 +305,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1818-expiredbtn</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1819-hinthide</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
@@ -353,7 +353,7 @@ body, html {
       infoOverlay.style.opacity = '1';
     }
     // Hide drag hint when bar moves past initial area
-    if (relativeY > barHeight * 2) {
+    if (relativeY > barHeight) {
       dragHint.style.opacity = '0';
     } else {
       dragHint.style.opacity = '1';
