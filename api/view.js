@@ -263,7 +263,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1752-alignfix</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1755-snapback</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
@@ -304,6 +304,8 @@ body, html {
 
   function handleStart(e) {
     isDragging = true;
+    revealBar.style.transition = '';
+    photo.style.transition = '';
     const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
     updateReveal(clientY);
   }
@@ -312,7 +314,20 @@ body, html {
     const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
     updateReveal(clientY);
   }
-  function handleEnd() { isDragging = false; }
+  function handleEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    // Smoothly snap back to top
+    revealBar.style.transition = 'top 0.3s ease-out';
+    photo.style.transition = 'clip-path 0.3s ease-out';
+    revealBar.style.top = '0px';
+    photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 36px, 0 36px)';
+    // Clear transitions after animation completes
+    setTimeout(() => {
+      revealBar.style.transition = '';
+      photo.style.transition = '';
+    }, 300);
+  }
 
   window.addEventListener('mousedown', handleStart);
   window.addEventListener('mousemove', handleMove);
