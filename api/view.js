@@ -186,6 +186,21 @@ body, html {
 }
 .reveal-bar.dragging { cursor: grabbing; }
 .reveal-bar.dragging::after { opacity: 0; }
+.reveal-bar.dragging .grab-hand { display: none; }
+
+.grab-hand {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  z-index: 55;
+  pointer-events: none;
+  animation: grabBounce 0.8s ease-in-out infinite;
+}
+@keyframes grabBounce {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(8px); }
+}
 
 /* Drag hint in unrevealed area */
 .drag-hint {
@@ -298,7 +313,9 @@ body, html {
     <div class="photo-container" id="photoContainer">
       <img src="/api/photo?token=${token}" alt="Secure Photo" class="photo" id="photo">
       <div class="scanlines"></div>
-      <div class="reveal-bar" id="revealBar"></div>
+      <div class="reveal-bar" id="revealBar">
+        <div class="grab-hand" id="grabHand">&#128071;</div>
+      </div>
       <div class="drag-hint" id="dragHint">
         <div class="drag-hint-text">Drag down to reveal</div>
         <div class="drag-hint-arrows">
@@ -318,7 +335,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1811-handlehide</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1812-grabhand</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
@@ -342,8 +359,10 @@ body, html {
   const expiredOverlay = document.getElementById('expiredOverlay');
   const infoOverlay = document.getElementById('infoOverlay');
   const dragHint = document.getElementById('dragHint');
+  const grabHand = document.getElementById('grabHand');
 
   let isDragging = false;
+  let hasDraggedOnce = false;
   let timeLeft = 60;
 
   function updateReveal(clientY) {
@@ -373,6 +392,10 @@ body, html {
 
   function handleStart(e) {
     isDragging = true;
+    if (!hasDraggedOnce) {
+      hasDraggedOnce = true;
+      if (grabHand) grabHand.style.display = 'none';
+    }
     revealBar.classList.add('dragging');
     revealBar.style.transition = '';
     photo.style.transition = '';
