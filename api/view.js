@@ -164,7 +164,7 @@ body, html {
   display: block; max-width: 100%; max-height: 100%;
   object-fit: contain;
   animation: aggressiveFlicker 0.15s infinite;
-  clip-path: polygon(0 0, 100% 0, 100% 60px, 0 60px);
+  clip-path: polygon(0 0, 100% 0, 100% 36px, 0 36px);
   transition: clip-path 0.1s linear;
   will-change: clip-path, filter;
 }
@@ -174,7 +174,7 @@ body, html {
 }
 .reveal-bar {
   position: absolute; top: 0; left: 0;
-  width: 100%; height: 60px;
+  width: 100%; height: 36px;
   background: linear-gradient(to bottom, rgba(0,122,255,0.3), rgba(0,122,255,0.1));
   border-bottom: 2px solid var(--primary);
   z-index: 50;
