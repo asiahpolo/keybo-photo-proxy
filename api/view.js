@@ -32,20 +32,24 @@ export default async function handler(req, res) {
 
     const upstreamBody = await upstreamResponse.text();
 
-    res.status(upstreamResponse.status);
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Content-Disposition', 'inline');
-    res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    // If the upstream secure-photo function returns a successful HTML page, forward it directly.
+    if (upstreamResponse.ok && upstreamResponse.headers.get('content-type')?.includes('text/html')) {
+      res.status(upstreamResponse.status);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline');
+      res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
 
-    const deployMarker = upstreamResponse.headers.get('x-secure-photo-deploy');
-    if (deployMarker) {
-      res.setHeader('X-Secure-Photo-Deploy', deployMarker);
+      const deployMarker = upstreamResponse.headers.get('x-secure-photo-deploy');
+      if (deployMarker) {
+        res.setHeader('X-Secure-Photo-Deploy', deployMarker);
+      }
+
+      return res.send(upstreamBody);
     }
 
-    return res.send(upstreamBody);
-
+    // Otherwise, fall back to the original DB lookup and HTML generation logic.
     console.log(`[VIEW] Token: ${token}`);
     
     // Query database to find photo by token
@@ -89,6 +93,25 @@ export default async function handler(req, res) {
     }
 
     // Return HTML page with reveal functionality
+    let appLinkUrl = 'https://keybo.ai';
+    // Fetch the app store/download link from the app_links table (first row)
+    try {
+      const linkRes = await fetch(`${SUPABASE_URL}/rest/v1/app_links?select=url,link_type&limit=1`, {
+        headers: {
+          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+          apikey: SUPABASE_SERVICE_KEY,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (linkRes.ok) {
+        const links = await linkRes.json();
+        if (links.length > 0 && links[0].url) {
+          appLinkUrl = links[0].url;
+        }
+      }
+    } catch (e) {
+      console.error('[VIEW] Failed to fetch app link:', e);
+    }
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,6 +153,7 @@ export default async function handler(req, res) {
         }
 
         .photo {
+        animation: blinkBlack 1s steps(2, start) infinite;
             display: block;
             max-height: 80vh;
             width: auto;
@@ -337,7 +361,8 @@ export default async function handler(req, res) {
             </div>
         </div>
         <div class="timer" id="timer">60s</div>
-        <div class="watermark"><a href="https://keybo.ai" target="_blank">Shared via Keybo</a></div>
+        <div class="expiry-note" id="expiry-note">You can view this link **once** – it expires in 1 minute.</div>
+        <div class="watermark"><a href="${appLinkUrl}" target="_blank">Shared via Keybo</a></div>
         <div class="expired" id="expired"></div>
     </div>
 
