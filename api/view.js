@@ -161,7 +161,7 @@ body, html {
   display: flex; justify-content: center; align-items: center;
 }
 .photo {
-  display: block; max-width: 100%; max-height: 100%;
+  display: block; width: 100%; height: 100%;
   object-fit: contain;
   animation: aggressiveFlicker 0.15s infinite;
   clip-path: polygon(0 0, 100% 0, 100% 36px, 0 36px);
