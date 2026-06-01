@@ -187,15 +187,48 @@ body, html {
   background: rgba(255,255,255,0.8); border-radius: 2px;
 }
 .reveal-bar.dragging { cursor: grabbing; }
+.reveal-bar.dragging::after { opacity: 0; }
 
-/* Welcome demo animation */
-@keyframes welcomeReveal {
-  0% { top: 0; }
-  50% { top: 30%; }
-  100% { top: 0; }
+/* Drag hint in unrevealed area */
+.drag-hint {
+  position: absolute;
+  top: 55%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  text-align: center;
+  z-index: 40;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
-.welcome-anim {
-  animation: welcomeReveal 1s ease-in-out;
+.drag-hint-text {
+  font-size: 14px;
+  margin-bottom: 8px;
+  opacity: 0.7;
+  letter-spacing: 0.5px;
+}
+.drag-hint-arrows {
+  position: relative;
+  width: 30px;
+  height: 24px;
+  margin: 0 auto;
+}
+.drag-arrow {
+  position: absolute;
+  left: 50%;
+  width: 10px; height: 10px;
+  margin-left: -5px;
+  border-left: 2px solid white;
+  border-bottom: 2px solid white;
+  transform: rotate(-45deg);
+  animation: dragHintBounce 1.2s infinite;
+  opacity: 0.5;
+}
+.drag-arrow:nth-child(1) { top: 0; animation-delay: 0s; }
+.drag-arrow:nth-child(2) { top: 6px; animation-delay: 0.15s; }
+.drag-arrow:nth-child(3) { top: 12px; animation-delay: 0.3s; }
+@keyframes dragHintBounce {
+  0%, 100% { transform: rotate(-45deg) translateY(0); opacity: 0.5; }
+  50% { transform: rotate(-45deg) translateY(6px); opacity: 0.9; }
 }
 
 .info-overlay {
@@ -268,6 +301,14 @@ body, html {
       <img src="/api/photo?token=${token}" alt="Secure Photo" class="photo" id="photo">
       <div class="scanlines"></div>
       <div class="reveal-bar" id="revealBar"></div>
+      <div class="drag-hint" id="dragHint">
+        <div class="drag-hint-text">Drag down to reveal</div>
+        <div class="drag-hint-arrows">
+          <div class="drag-arrow"></div>
+          <div class="drag-arrow"></div>
+          <div class="drag-arrow"></div>
+        </div>
+      </div>
     </div>
     <div class="info-overlay" id="infoOverlay">
       <div class="status-pill expiry" id="expiryPill">Link expires in 60s</div>
@@ -279,7 +320,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1802-borders-overlay</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1806-doublehint</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
@@ -302,6 +343,7 @@ body, html {
   const expiryLabel = document.getElementById('expiryPill');
   const expiredOverlay = document.getElementById('expiredOverlay');
   const infoOverlay = document.getElementById('infoOverlay');
+  const dragHint = document.getElementById('dragHint');
 
   let isDragging = false;
   let timeLeft = 60;
@@ -316,12 +358,18 @@ body, html {
     const start = relativeY;
     const end = relativeY + barHeight;
     photo.style.clipPath = 'polygon(0 ' + start + 'px, 100% ' + start + 'px, 100% ' + end + 'px, 0 ' + end + 'px)';
-    // Hide/show info overlay pills based on bar position
-    if (relativeY > barHeight) {
+    // Hide info overlay only when bar is more than halfway down
+    if (relativeY > containerHeight / 2) {
       infoOverlay.style.opacity = '0';
       infoOverlay.style.transition = 'opacity 0.2s ease';
     } else {
       infoOverlay.style.opacity = '1';
+    }
+    // Hide drag hint when bar moves past initial area
+    if (relativeY > barHeight * 2) {
+      dragHint.style.opacity = '0';
+    } else {
+      dragHint.style.opacity = '1';
     }
   }
 
@@ -346,6 +394,7 @@ body, html {
     revealBar.style.top = '0px';
     photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 36px, 0 36px)';
     infoOverlay.style.opacity = '1';
+    dragHint.style.opacity = '1';
     // Clear transitions after animation completes
     setTimeout(() => {
       revealBar.style.transition = '';
@@ -360,31 +409,42 @@ body, html {
   window.addEventListener('touchmove', handleMove, { passive: false });
   window.addEventListener('touchend', handleEnd);
 
-  // Welcome animation: bar goes down then snaps back
+  // Welcome animation: bar goes down twice to demonstrate usage
   (function welcomeAnimation() {
-    revealBar.classList.add('welcome-anim');
-    // Manually animate clip-path to match bar
-    photo.style.transition = 'clip-path 1s ease-in-out';
-    photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 36px, 0 36px)';
+    const containerHeight = container.getBoundingClientRect().height;
+    const barHeight = revealBar.offsetHeight;
+    const targetY = containerHeight * 0.3;
+    const endY = targetY + barHeight;
     
-    // Halfway: reveal 30%
+    // Cycle 1 down
     setTimeout(() => {
-      const containerHeight = container.getBoundingClientRect().height;
-      const barHeight = revealBar.offsetHeight;
-      const targetY = containerHeight * 0.3;
-      const endY = targetY + barHeight;
+      revealBar.style.transition = 'top 0.5s ease-out';
+      photo.style.transition = 'clip-path 0.5s ease-out';
       revealBar.style.top = targetY + 'px';
       photo.style.clipPath = 'polygon(0 ' + targetY + 'px, 100% ' + targetY + 'px, 100% ' + endY + 'px, 0 ' + endY + 'px)';
     }, 500);
     
-    // End: snap back to top
+    // Cycle 1 back
     setTimeout(() => {
-      revealBar.classList.remove('welcome-anim');
       revealBar.style.top = '0px';
       photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 36px, 0 36px)';
+    }, 1000);
+    
+    // Cycle 2 down
+    setTimeout(() => {
+      revealBar.style.top = targetY + 'px';
+      photo.style.clipPath = 'polygon(0 ' + targetY + 'px, 100% ' + targetY + 'px, 100% ' + endY + 'px, 0 ' + endY + 'px)';
+    }, 1500);
+    
+    // Cycle 2 back, cleanup
+    setTimeout(() => {
+      revealBar.style.top = '0px';
+      photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 36px, 0 36px)';
+      revealBar.style.transition = '';
       photo.style.transition = '';
       infoOverlay.style.opacity = '1';
-    }, 1000);
+      dragHint.style.opacity = '1';
+    }, 2000);
   })();
 
   const countdown = setInterval(() => {
