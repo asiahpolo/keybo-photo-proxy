@@ -176,6 +176,8 @@ body, html {
   position: absolute; top: 0; left: 0;
   width: 100%; height: 36px;
   background: transparent;
+  border-top: 1px solid rgba(255,255,255,0.5);
+  border-bottom: 1px solid rgba(255,255,255,0.5);
   z-index: 50;
   display: flex; justify-content: center; align-items: center;
   cursor: grab; touch-action: none;
@@ -183,10 +185,8 @@ body, html {
 .reveal-bar::after {
   content: ""; width: 40px; height: 4px;
   background: rgba(255,255,255,0.8); border-radius: 2px;
-  transition: opacity 0.2s ease;
 }
 .reveal-bar.dragging { cursor: grabbing; }
-.reveal-bar.dragging::after { opacity: 0; }
 
 /* Welcome demo animation */
 @keyframes welcomeReveal {
@@ -279,7 +279,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1759-transparent-welcome-row</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1802-borders-overlay</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
@@ -316,6 +316,13 @@ body, html {
     const start = relativeY;
     const end = relativeY + barHeight;
     photo.style.clipPath = 'polygon(0 ' + start + 'px, 100% ' + start + 'px, 100% ' + end + 'px, 0 ' + end + 'px)';
+    // Hide/show info overlay pills based on bar position
+    if (relativeY > barHeight) {
+      infoOverlay.style.opacity = '0';
+      infoOverlay.style.transition = 'opacity 0.2s ease';
+    } else {
+      infoOverlay.style.opacity = '1';
+    }
   }
 
   function handleStart(e) {
@@ -338,6 +345,7 @@ body, html {
     photo.style.transition = 'clip-path 0.3s ease-out';
     revealBar.style.top = '0px';
     photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 36px, 0 36px)';
+    infoOverlay.style.opacity = '1';
     // Clear transitions after animation completes
     setTimeout(() => {
       revealBar.style.transition = '';
@@ -375,6 +383,7 @@ body, html {
       revealBar.style.top = '0px';
       photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 36px, 0 36px)';
       photo.style.transition = '';
+      infoOverlay.style.opacity = '1';
     }, 1000);
   })();
 
