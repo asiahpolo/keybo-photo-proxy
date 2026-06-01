@@ -1,15 +1,10 @@
 // Vercel serverless function for photo viewing with reveal bar
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rfylaeapulczgqrrcicy.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmeWxhZWFwdWxjemdxcnJjaWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMzcyMTgsImV4cCI6MjA3MjcxMzIxOH0.H5WUfwszUTUGBhiUedx3Nwa_zk-Hn5hjUB1T2u7Rh7E';
-// Use service key if available, otherwise fall back to anon key
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmeWxhZWFwdWxjemdxcnJjaWN5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzEzNzIxOCwiZXhwIjoyMDcyNzEzMjE4fQ.80VWdHRNc9V55A8Twl4BSxzLbgCcRCJzXwhbPHAd4Eo';
-
-console.log(`[VIEW] Using SUPABASE_URL: ${SUPABASE_URL}`);
-console.log(`[VIEW] Service key available: ${!!process.env.SUPABASE_SERVICE_KEY}`);
 
 export default async function handler(req, res) {
   const { token } = req.query;
-  
   if (!token) {
     return res.status(400).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px">Token required</body></html>');
   }
@@ -32,7 +27,6 @@ export default async function handler(req, res) {
 
     const upstreamBody = await upstreamResponse.text();
 
-    // If the upstream secure-photo function returns a successful HTML page, forward it directly.
     if (upstreamResponse.ok && upstreamResponse.headers.get('content-type')?.includes('text/html')) {
       res.status(upstreamResponse.status);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -40,22 +34,14 @@ export default async function handler(req, res) {
       res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
-
       const deployMarker = upstreamResponse.headers.get('x-secure-photo-deploy');
       if (deployMarker) {
         res.setHeader('X-Secure-Photo-Deploy', deployMarker);
       }
-
       return res.send(upstreamBody);
     }
 
-    // Otherwise, fall back to the original DB lookup and HTML generation logic.
-    console.log(`[VIEW] Token: ${token}`);
-    
-    // Query database to find photo by token
     const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?short_token=eq.${token}&select=photo_id,expires_at,is_active`;
-    console.log(`[VIEW] Query URL: ${dbUrl}`);
-    
     const dbResponse = await fetch(dbUrl, {
       headers: {
         'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
@@ -64,37 +50,25 @@ export default async function handler(req, res) {
       }
     });
 
-    console.log(`[VIEW] DB Response status: ${dbResponse.status}`);
-    
     if (!dbResponse.ok) {
-      const errorText = await dbResponse.text();
-      console.log(`[VIEW] DB Error: ${errorText}`);
       return res.status(404).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Photo Not Found</h1><p>This link may have expired or is invalid</p></body></html>');
     }
 
     const shares = await dbResponse.json();
-    console.log(`[VIEW] Shares found: ${shares.length}`, shares);
-    
     if (!shares || shares.length === 0) {
-      console.log(`[VIEW] No shares found for token: ${token}`);
       return res.status(404).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Photo Not Found</h1><p>This link may have expired or is invalid</p></body></html>');
     }
 
     const share = shares[0];
-    
-    // Check if link is active
     if (!share.is_active) {
       return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link is no longer active</p></body></html>');
     }
-    
-    // Check if expired
     if (new Date(share.expires_at) < new Date()) {
       return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link has expired</p></body></html>');
     }
 
-    // Return HTML page with reveal functionality
     let appLinkUrl = 'https://keybo.ai';
-    // Fetch the app store/download link from the app_links table (first row)
+    const currentDate = new Date().toLocaleString();
     try {
       const linkRes = await fetch(`${SUPABASE_URL}/rest/v1/app_links?select=url,link_type&limit=1`, {
         headers: {
@@ -112,397 +86,276 @@ export default async function handler(req, res) {
     } catch (e) {
       console.error('[VIEW] Failed to fetch app link:', e);
     }
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Secure Photo</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #111;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
-            -webkit-user-select: none; /* Safari */
-            -moz-user-select: none; /* Firefox */
-            -ms-user-select: none; /* IE10+/Edge */
-            user-select: none; /* Standard */
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Secure Photo - Keybo</title>
+<style>
+:root {
+  --primary: #007AFF;
+  --bg: #000000;
+  --surface: #1C1C1E;
+  --text: #FFFFFF;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+body, html {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  background: var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  color: var(--text);
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+.main-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%; height: 100%;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  box-sizing: border-box;
+}
+.header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(10px);
+}
+.brand { font-weight: 700; font-size: 20px; letter-spacing: -0.5px; color: var(--primary); }
+.timer-container {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.timer-icon {
+  width: 12px; height: 12px; border-radius: 50%; background: #FF3B30;
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+#timer { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; }
 
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-        }
+.photo-area {
+  flex: 1; position: relative;
+  display: flex; justify-content: center; align-items: center;
+  overflow: hidden; background: #000;
+}
+.photo-container {
+  position: relative;
+  width: 100%; height: 100%;
+  max-width: 100vw; max-height: 80vh;
+  display: flex; justify-content: center; align-items: center;
+}
+.photo {
+  display: block; max-width: 100%; max-height: 100%;
+  object-fit: contain;
+  animation: aggressiveFlicker 0.15s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 60px, 0 60px);
+  transition: clip-path 0.1s linear;
+  will-change: clip-path, filter;
+}
+@keyframes aggressiveFlicker {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(0); }
+}
+.reveal-bar {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 60px;
+  background: linear-gradient(to bottom, rgba(0,122,255,0.3), rgba(0,122,255,0.1));
+  border-bottom: 2px solid var(--primary);
+  z-index: 50;
+  display: flex; justify-content: center; align-items: center;
+  cursor: grab; touch-action: none;
+}
+.reveal-bar::after {
+  content: ""; width: 40px; height: 4px;
+  background: rgba(255,255,255,0.8); border-radius: 2px;
+}
+.reveal-bar.dragging { cursor: grabbing; }
 
-        .photo-wrapper {
-            position: relative;
-            max-height: 80vh;
-            aspect-ratio: auto;
-            background: black;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.info-overlay {
+  position: absolute; bottom: 20px; left: 50%;
+  transform: translateX(-50%);
+  width: 90%; text-align: center;
+  pointer-events: none; z-index: 60;
+}
+.status-pill {
+  display: inline-block;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+  padding: 8px 16px; border-radius: 20px;
+  font-size: 13px; margin-bottom: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.status-pill.expiry { color: #FF9500; font-weight: 500; }
 
-        .photo {
-        animation: blinkBlack 1s steps(2, start) infinite;
-            display: block;
-            max-height: 80vh;
-            width: auto;
-            object-fit: contain;
-            clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px);
-            transition: clip-path 0.3s ease;
-            image-rendering: -webkit-optimize-contrast;
-        }
+.watermark {
+  margin-top: auto; padding: 24px;
+  text-align: center;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+}
+.download-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--surface); color: white;
+  text-decoration: none; padding: 12px 24px;
+  border-radius: 12px; font-weight: 600; font-size: 15px;
+  transition: transform 0.2s;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.download-btn:active { transform: scale(0.95); }
+.footer-text { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 12px; }
 
-        .reveal-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 45px;
-            background: transparent;
-            border: none;
-            cursor: grab;
-            z-index: 10;
-            transition: top 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: demonstrateReveal 12s ease-in-out 1 forwards;
-        }
+.expired-overlay {
+  position: absolute; inset: 0; background: #000;
+  display: none; flex-direction: column;
+  justify-content: center; align-items: center;
+  z-index: 1000; padding: 40px; text-align: center;
+}
+.expired-icon { font-size: 48px; margin-bottom: 24px; }
+.expired-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+.expired-subtitle { font-size: 16px; color: rgba(255,255,255,0.6); line-height: 1.5; }
 
-        .reveal-bar.no-animation {
-            animation: none !important;
-        }
-
-        .reveal-bar.dragging {
-            cursor: grabbing;
-        }
-
-        @keyframes demonstrateReveal {
-            0%, 100% { top: 0; }
-            25% { top: 25%; }
-            50% { top: 0; }
-            75% { top: 25%; }
-        }
-
-        .photo.animating:not(.no-animation) {
-            animation: revealAnimation 12s ease-in-out 1 forwards;
-        }
-
-        @keyframes revealAnimation {
-            0% { clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px); }
-            25% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 51px), 0 calc(25% + 51px)); }
-            50% { clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px); }
-            75% { clip-path: polygon(0 25%, 100% 25%, 100% calc(25% + 51px), 0 calc(25% + 51px)); }
-            100% { clip-path: polygon(0 0, 100% 0, 100% 51px, 0 51px); }
-        }
-
-        .photo-wrapper {
-            overflow: hidden;
-        }
-
-        .reveal-bar.dragging {
-            animation: none;
-        }
-
-        .reveal-bar-handle {
-            width: 50px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 3px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            cursor: grab;
-            transition: opacity 0.2s ease;
-        }
-
-        .reveal-bar:active .reveal-bar-handle,
-        .reveal-bar.dragging .reveal-bar-handle {
-            cursor: grabbing;
-            background: rgba(255, 255, 255, 1);
-            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
-            opacity: 0;
-        }
-
-        .reveal-bar:active {
-            cursor: grabbing;
-        }
-
-        .onboarding-hint {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 16px;
-            z-index: 15;
-            pointer-events: none;
-            opacity: 1;
-            transition: opacity 0.5s ease;
-            text-align: center;
-        }
-
-        .onboarding-hint .arrows {
-            position: relative;
-            width: 60px;
-            height: 30px;
-            margin: 10px auto 0;
-        }
-
-        .onboarding-hint .arrow {
-            position: absolute;
-            left: 50%;
-            width: 12px;
-            height: 12px;
-            margin-left: -6px;
-            border-left: 2px solid white;
-            border-bottom: 2px solid white;
-            transform: rotate(-45deg);
-            animation: bounce 1.5s infinite;
-        }
-
-        .onboarding-hint .arrow:nth-child(2) {
-            animation-delay: -0.2s;
-        }
-
-        .onboarding-hint .arrow:nth-child(3) {
-            animation-delay: -0.4s;
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotate(-45deg); }
-            40% { transform: translateY(10px) rotate(-45deg); }
-            60% { transform: translateY(5px) rotate(-45deg); }
-        }
-
-        .timer, .watermark, .expired {
-            position: absolute;
-            z-index: 20;
-            color: white;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            backdrop-filter: blur(5px);
-        }
-
-        .timer {
-            top: 20px;
-            right: 20px;
-        }
-
-        .watermark {
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .watermark a {
-            color: white;
-            text-decoration: none;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .watermark a:hover {
-            opacity: 0.8;
-        }
-
-        .expired {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            display: none;
-        }
-
-        .guidance {
-            position: absolute;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 13px;
-            text-align: center;
-            pointer-events: none;
-            animation: fadeInOut 3s ease-in-out;
-        }
-
-        @keyframes fadeInOut {
-            0%, 100% { opacity: 0; }
-            50% { opacity: 1; }
-        }
-    </style>
+.scanlines {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%);
+  background-size: 100% 4px;
+  z-index: 55; pointer-events: none; opacity: 0.1;
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="photo-wrapper">
-            <img src="/api/photo?token=${token}" alt="Secure Photo" class="photo">
-            <div class="guidance" id="guidance">Drag the bar down to reveal photo</div>
-            <div class="onboarding-hint" id="onboardingHint">
-                <span>Drag down to reveal</span>
-                <div class="arrows">
-                    <div class="arrow"></div>
-                    <div class="arrow"></div>
-                    <div class="arrow"></div>
-                </div>
-            </div>
-            <div class="reveal-bar" id="revealBar">
-                <div class="reveal-bar-handle"></div>
-            </div>
-        </div>
-        <div class="timer" id="timer">60s</div>
-        <div class="expiry-note" id="expiry-note">You can view this link **once** – it expires in 1 minute.</div>
-        <div class="watermark"><a href="${appLinkUrl}" target="_blank">Shared via Keybo</a></div>
-        <div class="expired" id="expired"></div>
+<div class="main-container">
+  <header class="header">
+    <div class="brand">keybo.ai</div>
+    <div class="timer-container">
+      <div class="timer-icon"></div>
+      <div id="timer">60s</div>
     </div>
+  </header>
 
-    <script>
-        document.addEventListener('contextmenu', event => event.preventDefault());
+  <main class="photo-area">
+    <div class="photo-container" id="photoContainer">
+      <img src="/api/photo?token=${token}" alt="Secure Photo" class="photo" id="photo">
+      <div class="scanlines"></div>
+      <div class="reveal-bar" id="revealBar"></div>
+    </div>
+    <div class="info-overlay" id="infoOverlay">
+      <div class="status-pill expiry" id="expiryPill">Link expires in 60s</div>
+      <br>
+      <div class="status-pill">One-time view only</div>
+    </div>
+  </main>
 
-        const photo = document.querySelector('.photo');
-        const revealBar = document.getElementById('revealBar');
-        const photoWrapper = document.querySelector('.photo-wrapper');
-        const onboardingHint = document.getElementById('onboardingHint');
-        const guidance = document.getElementById('guidance');
-        let isDragging = false;
-        let hasDragged = false;
+  <footer class="watermark">
+    <a href="${appLinkUrl}" target="_blank" class="download-btn">
+      <span>Get Keybo App</span>
+    </a>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate}</div>
+  </footer>
 
-        // Start animation on page load
-        let animationStarted = false;
-        photo.classList.add('animating');
-        animationStarted = true;
+  <div class="expired-overlay" id="expiredOverlay">
+    <div class="expired-icon">&#128274;</div>
+    <div class="expired-title">Link Expired</div>
+    <div class="expired-subtitle">This secure photo has been permanently deleted for your protection.</div>
+    <br><br>
+    <a href="${appLinkUrl}" target="_blank" class="download-btn">Try Keybo</a>
+  </div>
+</div>
 
-        function updateReveal(clientY) {
-            const wrapperRect = photoWrapper.getBoundingClientRect();
-            const barHeight = revealBar.offsetHeight;
-            const photoHeight = wrapperRect.height;
+<script>
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('dragstart', e => e.preventDefault());
 
-            let barTop = clientY - wrapperRect.top;
-            barTop = Math.max(0, Math.min(photoHeight - barHeight, barTop));
+  const photo = document.getElementById('photo');
+  const revealBar = document.getElementById('revealBar');
+  const container = document.getElementById('photoContainer');
+  const timerLabel = document.getElementById('timer');
+  const expiryLabel = document.getElementById('expiryPill');
+  const expiredOverlay = document.getElementById('expiredOverlay');
+  const infoOverlay = document.getElementById('infoOverlay');
 
-            revealBar.style.top = barTop + 'px';
+  let isDragging = false;
+  let timeLeft = 60;
 
-            // Use polygon to create a window that matches bar height exactly
-            const barBottom = barTop + barHeight;
-            photo.style.clipPath = 'polygon(0 ' + barTop + 'px, 100% ' + barTop + 'px, 100% ' + barBottom + 'px, 0 ' + barBottom + 'px)';
-        }
+  function updateReveal(clientY) {
+    const rect = container.getBoundingClientRect();
+    const barHeight = revealBar.offsetHeight;
+    const containerHeight = rect.height;
+    let relativeY = clientY - rect.top;
+    relativeY = Math.max(0, Math.min(containerHeight - barHeight, relativeY));
+    revealBar.style.top = relativeY + 'px';
+    const start = relativeY;
+    const end = relativeY + barHeight;
+    photo.style.clipPath = 'polygon(0 ' + start + 'px, 100% ' + start + 'px, 100% ' + end + 'px, 0 ' + end + 'px)';
+  }
 
-        let hasInteracted = false;
-        function trackInteraction() {
-            if (!hasInteracted) {
-                hasInteracted = true;
-            }
-        }
+  function handleStart(e) {
+    isDragging = true;
+    const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+    updateReveal(clientY);
+  }
+  function handleMove(e) {
+    if (!isDragging) return;
+    const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+    updateReveal(clientY);
+  }
+  function handleEnd() { isDragging = false; }
 
-        function startDrag(event) {
-            trackInteraction();
-            isDragging = true;
-            revealBar.classList.add('dragging');
-            // Add no-animation class to both photo and reveal bar to prevent animation from running
-            photo.classList.add('no-animation');
-            revealBar.classList.add('no-animation');
-            revealBar.style.cursor = 'grabbing';
-            document.body.style.cursor = 'grabbing';
-            photo.style.transition = 'none';
-            revealBar.style.transition = 'none';
+  window.addEventListener('mousedown', handleStart);
+  window.addEventListener('mousemove', handleMove);
+  window.addEventListener('mouseup', handleEnd);
+  window.addEventListener('touchstart', handleStart, { passive: false });
+  window.addEventListener('touchmove', handleMove, { passive: false });
+  window.addEventListener('touchend', handleEnd);
 
-            if (!hasDragged) {
-                hasDragged = true;
-                onboardingHint.style.opacity = '0';
-                guidance.style.opacity = '0';
-            }
+  const countdown = setInterval(() => {
+    timeLeft--;
+    const display = timeLeft + 's';
+    timerLabel.textContent = display;
+    expiryLabel.textContent = 'Link expires in ' + display;
+    if (timeLeft <= 0) {
+      clearInterval(countdown);
+      expiredOverlay.style.display = 'flex';
+      infoOverlay.style.display = 'none';
+    }
+  }, 1000);
 
-            if (event.type === 'touchstart') event.preventDefault();
-        }
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'PrintScreen' || 
+        (e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4')) ||
+        (e.ctrlKey && e.shiftKey && e.key === 'S')) {
+      e.preventDefault();
+      photo.style.display = 'none';
+      setTimeout(() => photo.style.display = 'block', 1000);
+    }
+  });
 
-        function endDrag() {
-            if (!isDragging) return;
-            isDragging = false;
-            revealBar.classList.remove('dragging');
-            revealBar.style.cursor = 'grab';
-            document.body.style.cursor = 'default';
-
-            photo.style.transition = 'clip-path 0.3s ease';
-            revealBar.style.transition = 'top 0.3s ease';
-            revealBar.style.top = '0px';
-            // Use polygon to match bar height exactly (51px)
-            photo.style.clipPath = 'polygon(0 0, 100% 0, 100% 51px, 0 51px)';
-        }
-
-        function onDrag(event) {
-            if (!isDragging) return;
-            const clientY = event.type === 'touchmove' ? event.touches[0].clientY : event.clientY;
-            updateReveal(clientY);
-        }
-
-        // Allow dragging from anywhere on the screen
-        function startDragAnywhere(event) {
-            // Only start drag if not already dragging
-            if (isDragging) return;
-            startDrag(event);
-        }
-
-        revealBar.addEventListener('mousedown', startDrag);
-        photoWrapper.addEventListener('mousedown', startDragAnywhere);
-        document.addEventListener('mouseup', endDrag);
-        document.addEventListener('mousemove', onDrag);
-
-        revealBar.addEventListener('touchstart', startDrag);
-        photoWrapper.addEventListener('touchstart', startDragAnywhere);
-        document.addEventListener('touchend', endDrag);
-        document.addEventListener('touchmove', onDrag);
-
-        // Countdown Timer (always 60s)
-        let timeLeft = 60;
-        const timerEl = document.getElementById('timer');
-        const expiredEl = document.getElementById('expired');
-        const photoWrapperEl = document.querySelector('.photo-wrapper');
-        
-        const countdown = setInterval(() => {
-            timeLeft--;
-            timerEl.textContent = timeLeft + 's';
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
-                photoWrapperEl.style.display = 'none';
-                timerEl.style.display = 'none';
-                expiredEl.innerHTML = '<h2>Photo Link Expired</h2><p>This secure photo is no longer available</p>';
-                expiredEl.style.display = 'block';
-            }
-        }, 1000);
-
-        setTimeout(() => window.location.reload(), 61000);
-
-        // Prevent screenshot shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'PrintScreen' || 
-                (e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4')) ||
-                (e.ctrlKey && e.shiftKey && e.key === 'S')) {
-                e.preventDefault();
-                alert('Screenshots are not allowed');
-            }
-        });
-
-        // Prevent drag and drop
-        document.addEventListener('dragstart', (e) => {
-            e.preventDefault();
-        });
-    </script>
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      photo.style.opacity = '0';
+    } else {
+      photo.style.opacity = '1';
+    }
+  });
+</script>
 </body>
 </html>`;
 
     res.setHeader('Content-Type', 'text/html');
     return res.send(html);
-    
   } catch (error) {
     console.error('Photo view error:', error);
     return res.status(500).json({ error: 'Internal server error' });
