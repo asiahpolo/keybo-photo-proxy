@@ -318,7 +318,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1810-sync</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1811-handlehide</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
@@ -373,6 +373,7 @@ body, html {
 
   function handleStart(e) {
     isDragging = true;
+    revealBar.classList.add('dragging');
     revealBar.style.transition = '';
     photo.style.transition = '';
     const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
@@ -386,6 +387,7 @@ body, html {
   function handleEnd() {
     if (!isDragging) return;
     isDragging = false;
+    revealBar.classList.remove('dragging');
     // Smoothly snap back to top
     revealBar.style.transition = 'top 0.3s ease-out';
     photo.style.transition = 'clip-path 0.3s ease-out';
