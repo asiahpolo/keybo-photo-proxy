@@ -192,7 +192,7 @@ body, html {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 20px;
+  font-size: 26px;
   z-index: 55;
   pointer-events: none;
   animation: grabBounce 0.8s ease-in-out infinite;
@@ -335,7 +335,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1812-grabhand</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1815-bighand</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
