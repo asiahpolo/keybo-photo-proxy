@@ -205,8 +205,8 @@ body, html {
 /* Drag hint in unrevealed area */
 .drag-hint {
   position: absolute;
-  top: 55%; left: 50%;
-  transform: translate(-50%, -50%);
+  top: 86px; left: 50%;
+  transform: translateX(-50%);
   color: white;
   text-align: center;
   z-index: 40;
@@ -215,33 +215,8 @@ body, html {
 }
 .drag-hint-text {
   font-size: 14px;
-  margin-bottom: 8px;
   opacity: 0.7;
   letter-spacing: 0.5px;
-}
-.drag-hint-arrows {
-  position: relative;
-  width: 30px;
-  height: 24px;
-  margin: 0 auto;
-}
-.drag-arrow {
-  position: absolute;
-  left: 50%;
-  width: 10px; height: 10px;
-  margin-left: -5px;
-  border-left: 2px solid white;
-  border-bottom: 2px solid white;
-  transform: rotate(-45deg);
-  animation: dragHintBounce 1.2s infinite;
-  opacity: 0.5;
-}
-.drag-arrow:nth-child(1) { top: 0; animation-delay: 0s; }
-.drag-arrow:nth-child(2) { top: 6px; animation-delay: 0.15s; }
-.drag-arrow:nth-child(3) { top: 12px; animation-delay: 0.3s; }
-@keyframes dragHintBounce {
-  0%, 100% { transform: rotate(-45deg) translateY(0); opacity: 0.5; }
-  50% { transform: rotate(-45deg) translateY(6px); opacity: 0.9; }
 }
 
 .info-overlay {
@@ -318,11 +293,6 @@ body, html {
       </div>
       <div class="drag-hint" id="dragHint">
         <div class="drag-hint-text">Drag down to reveal</div>
-        <div class="drag-hint-arrows">
-          <div class="drag-arrow"></div>
-          <div class="drag-arrow"></div>
-          <div class="drag-arrow"></div>
-        </div>
       </div>
     </div>
     <div class="info-overlay" id="infoOverlay">
@@ -335,7 +305,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1815-bighand</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1818-expiredbtn</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
@@ -343,7 +313,7 @@ body, html {
     <div class="expired-title">Link Expired</div>
     <div class="expired-subtitle">This secure photo has been permanently deleted for your protection.</div>
     <br><br>
-    <a href="${appLinkUrl}" target="_blank" class="download-btn">Try Keybo</a>
+    <a href="${appLinkUrl}" target="_blank" class="download-btn">Get Keybo App</a>
   </div>
 </div>
 
