@@ -5,6 +5,17 @@ const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rfylaeapulczgqrrcicy.s
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmeWxhZWFwdWxjemdxcnJjaWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMzcyMTgsImV4cCI6MjA3MjcxMzIxOH0.H5WUfwszUTUGBhiUedx3Nwa_zk-Hn5hjUB1T2u7Rh7E';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmeWxhZWFwdWxjemdxcnJjaWN5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzEzNzIxOCwiZXhwIjoyMDcyNzEzMjE4fQ.80VWdHRNc9V55A8Twl4BSxzLbgCcRCJzXwhbPHAd4Eo';
 
+function detectBot(userAgent) {
+  const botPatterns = [
+    /facebookexternalhit/i, /Twitterbot/i, /LinkedInBot/i, /WhatsApp/i,
+    /TelegramBot/i, /SkypeUriPreview/i, /Slackbot/i, /DiscordBot/i,
+    /com\.apple\.WebKit\.Networking/i, /LinkPreview/i,
+    /Googlebot/i, /Bingbot/i, /YandexBot/i, /DuckDuckBot/i,
+    /crawler/i, /spider/i, /scraper/i, /preview/i, /unfurl/i, /embed/i, /thumbnail/i,
+  ];
+  return botPatterns.some(p => p.test(userAgent));
+}
+
 export default async function handler(req, res) {
   const { token } = req.query;
   
@@ -32,7 +43,7 @@ export default async function handler(req, res) {
     
     console.log(`[PHOTO] Query: ${query}`);
     
-    const dbResponse = await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?${query}&select=photo_id,expires_at`, {
+    const dbResponse = await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?${query}&select=photo_id,expires_at,first_opened_at,view_window_seconds,max_views,current_views,id,is_active`, {
       headers: {
         'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
         'apikey': SUPABASE_SERVICE_KEY,
@@ -56,9 +67,47 @@ export default async function handler(req, res) {
 
     const share = shares[0];
     console.log(`[PHOTO] Share record: ${JSON.stringify(share)}`);
-    
-    // Check if expired
-    if (new Date(share.expires_at) < new Date()) {
+
+    if (!share.is_active) {
+      return res.status(410).json({ error: 'Photo link is no longer active' });
+    }
+
+    if (share.current_views >= share.max_views) {
+      return res.status(410).json({ error: 'Photo link view limit exceeded' });
+    }
+
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const isBot = detectBot(userAgent);
+
+    const now = new Date();
+
+    // First-open logic: record when a human first opens the link
+    if (!share.first_opened_at && !isBot) {
+      await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?id=eq.${share.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'apikey': SUPABASE_SERVICE_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ first_opened_at: now.toISOString() }),
+      });
+      share.first_opened_at = now.toISOString();
+    }
+
+    // Effective expiry: first_opened_at + view_window_seconds
+    if (share.first_opened_at) {
+      const firstOpened = new Date(share.first_opened_at);
+      const windowSeconds = share.view_window_seconds || 60;
+      const effectiveExpiry = new Date(firstOpened.getTime() + windowSeconds * 1000);
+      if (now > effectiveExpiry) {
+        console.log(`[PHOTO] Link expired after viewing window`);
+        return res.status(410).json({ error: 'Photo link has expired' });
+      }
+    }
+
+    // Hard cap from expires_at
+    if (share.expires_at && new Date(share.expires_at) < now) {
       console.log(`[PHOTO] Link expired: ${share.expires_at}`);
       return res.status(410).json({ error: 'Photo link has expired' });
     }
