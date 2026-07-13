@@ -353,7 +353,7 @@ body, html {
     <a href="${appLinkUrl}" target="_blank" class="download-btn">
       <span>Get Keybo App</span>
     </a>
-    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate} &bull; BUILD: v-2026-0601-1819-hinthide</div>
+    <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate}</div>
   </footer>
 
   <div class="expired-overlay" id="expiredOverlay">
