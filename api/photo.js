@@ -1,9 +1,12 @@
 // Vercel serverless function for sp.keybo.ai photo sharing
 // Handles both short tokens (6 chars) and long tokens (32+ chars)
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rfylaeapulczgqrrcicy.supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmeWxhZWFwdWxjemdxcnJjaWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMzcyMTgsImV4cCI6MjA3MjcxMzIxOH0.H5WUfwszUTUGBhiUedx3Nwa_zk-Hn5hjUB1T2u7Rh7E';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmeWxhZWFwdWxjemdxcnJjaWN5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzEzNzIxOCwiZXhwIjoyMDcyNzEzMjE4fQ.80VWdHRNc9V55A8Twl4BSxzLbgCcRCJzXwhbPHAd4Eo';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  console.error('[PHOTO] Missing required environment variables: SUPABASE_URL, SUPABASE_SERVICE_KEY');
+}
 
 function detectBot(userAgent) {
   const botPatterns = [
