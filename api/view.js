@@ -74,11 +74,16 @@ export default async function handler(req, res) {
     }
 
     const share = shares[0];
+
+    // The demo link (sp.keybo.ai/demo) is a permanent showcase — it must never expire,
+    // never hit the view cap, and never record first_opened_at. Mirrors the edge function.
+    const isDemo = normalizedToken === 'demo' || share.short_token === 'demo';
+
     if (!share.is_active) {
       return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link is no longer active</p></body></html>');
     }
 
-    if (share.current_views >= share.max_views) {
+    if (!isDemo && share.current_views >= share.max_views) {
       return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link view limit exceeded</p></body></html>');
     }
 
@@ -87,7 +92,7 @@ export default async function handler(req, res) {
     const now = new Date();
 
     // First-open logic: record when a human first opens the link
-    if (!share.first_opened_at && !isBot) {
+    if (!isDemo && !share.first_opened_at && !isBot) {
       await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?id=eq.${share.id}`, {
         method: 'PATCH',
         headers: {
@@ -101,7 +106,7 @@ export default async function handler(req, res) {
     }
 
     // Effective expiry: first_opened_at + view_window_seconds
-    if (share.first_opened_at) {
+    if (!isDemo && share.first_opened_at) {
       const firstOpened = new Date(share.first_opened_at);
       const windowSeconds = share.view_window_seconds || 60;
       const effectiveExpiry = new Date(firstOpened.getTime() + windowSeconds * 1000);
@@ -111,7 +116,7 @@ export default async function handler(req, res) {
     }
 
     // Hard cap from expires_at
-    if (share.expires_at && new Date(share.expires_at) < now) {
+    if (!isDemo && share.expires_at && new Date(share.expires_at) < now) {
       return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link has expired</p></body></html>');
     }
 
