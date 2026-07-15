@@ -316,7 +316,7 @@ body, html {
 
   <main class="photo-area">
     <div class="photo-container" id="photoContainer">
-      <img src="/api/photo?token=${token}" alt="Secure Photo" class="photo" id="photo">
+      <img src="/api/photo?token=${resolvedToken}" alt="Secure Photo" class="photo" id="photo">
       <div class="scanlines"></div>
       <div class="reveal-bar" id="revealBar">
         <div class="grab-hand" id="grabHand">&#128071;</div>
