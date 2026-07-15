@@ -41,8 +41,14 @@ export default async function handler(req, res) {
 
     const upstreamBody = await upstreamResponse.text();
 
-    if (upstreamResponse.ok && upstreamResponse.headers.get('content-type')?.includes('text/html')) {
-      res.status(upstreamResponse.status);
+    // The Supabase edge function is the authoritative renderer. Serve its response whenever it
+    // returns HTML — detect by BODY SHAPE, not just the content-type header. A content-type or
+    // status mismatch on the upstream would otherwise drop us into the secondary DB-fallback path
+    // and 500 on links the edge function already renders fine (e.g. /demo, which the edge function
+    // returns full HTML for). Forcing the correct Content-Type here also fixes any header quirk.
+    const upstreamLooksLikeHtml = /^\s*<(!doctype|html)/i.test(upstreamBody);
+    if (upstreamLooksLikeHtml) {
+      res.status(upstreamResponse.ok ? upstreamResponse.status : 200);
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Content-Disposition', 'inline');
       res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
