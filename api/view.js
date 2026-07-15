@@ -29,38 +29,9 @@ export default async function handler(req, res) {
     : normalizedToken;
 
   try {
-    const upstreamUrl = `${SUPABASE_URL}/functions/v1/secure-photo?token=${encodeURIComponent(resolvedToken)}`;
-    const upstreamResponse = await fetch(upstreamUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': req.headers['user-agent'] || 'unknown',
-        'Accept': 'text/html',
-        'X-Forwarded-For': req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown'
-      }
-    });
-
-    const upstreamBody = await upstreamResponse.text();
-
-    // The Supabase edge function is the authoritative renderer. Serve its response whenever it
-    // returns HTML — detect by BODY SHAPE, not just the content-type header. A content-type or
-    // status mismatch on the upstream would otherwise drop us into the secondary DB-fallback path
-    // and 500 on links the edge function already renders fine (e.g. /demo, which the edge function
-    // returns full HTML for). Forcing the correct Content-Type here also fixes any header quirk.
-    const upstreamLooksLikeHtml = /^\s*<(!doctype|html)/i.test(upstreamBody);
-    if (upstreamLooksLikeHtml) {
-      res.status(upstreamResponse.ok ? upstreamResponse.status : 200);
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Content-Disposition', 'inline');
-      res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      const deployMarker = upstreamResponse.headers.get('x-secure-photo-deploy');
-      if (deployMarker) {
-        res.setHeader('X-Secure-Photo-Deploy', deployMarker);
-      }
-      return res.send(upstreamBody);
-    }
-
+    // Render THIS file's own viewer template (the latest UI: Get Keybo App CTA, "One-time view
+    // only", expiry pill, richer reveal). We intentionally do NOT proxy the Supabase edge function
+    // here — its HTML is an older, stripped-down viewer, and proxying it is what regressed the UI.
     const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?or=(short_token.eq.${token},share_token.eq.${token})&select=photo_id,expires_at,is_active,first_opened_at,view_window_seconds,max_views,current_views,id`;
     const dbResponse = await fetch(dbUrl, {
       headers: {
