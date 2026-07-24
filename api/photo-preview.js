@@ -17,9 +17,28 @@ const BLURRED_PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="
 </svg>`;
 
 export default async function handler(req, res) {
-  res.setHeader('Content-Type', 'image/svg+xml');
-  res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.setHeader('Content-Security-Policy', "default-src 'none'");
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  return res.send(BLURRED_PLACEHOLDER_SVG);
+  // Convert SVG to PNG for better compatibility with iOS SMS and other platforms
+  try {
+    const sharp = require('sharp');
+    const svgBuffer = Buffer.from(BLURRED_PLACEHOLDER_SVG);
+    
+    // Convert SVG to PNG for better platform compatibility
+    const pngBuffer = await sharp(svgBuffer)
+      .png()
+      .toBuffer();
+    
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Content-Security-Policy', "default-src 'none'");
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    return res.send(pngBuffer);
+  } catch (error) {
+    // Fallback to SVG if sharp is not available
+    console.error('[PHOTO-PREVIEW] Sharp not available, falling back to SVG');
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Content-Security-Policy', "default-src 'none'");
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    return res.send(BLURRED_PLACEHOLDER_SVG);
+  }
 }

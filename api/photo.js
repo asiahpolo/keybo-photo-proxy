@@ -2,6 +2,7 @@
 // Handles both short tokens (6 chars) and long tokens (32+ chars)
 
 import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -213,6 +214,22 @@ export default async function handler(req, res) {
 
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=3600');
+    
+    // If this is a bot/link preview scraper, serve a blurred version
+    if (isBot) {
+      try {
+        const blurredBuffer = await sharp(Buffer.from(photoBuffer))
+          .blur(20)
+          .toBuffer();
+        res.setHeader('Content-Length', blurredBuffer.byteLength);
+        return res.send(blurredBuffer);
+      } catch (blurError) {
+        console.error('[PHOTO] Blur failed, serving original:', blurError);
+        res.setHeader('Content-Length', photoBuffer.byteLength);
+        return res.send(Buffer.from(photoBuffer));
+      }
+    }
+
     res.setHeader('Content-Length', photoBuffer.byteLength);
 
     // Send the photo data directly
