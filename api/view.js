@@ -123,6 +123,17 @@ export default async function handler(req, res) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Secure Photo - Keybo</title>
+<!-- Open Graph meta tags for link previews - use blurred placeholder -->
+<meta property="og:title" content="Secure Photo - Keybo" />
+<meta property="og:description" content="A secure photo has been shared with you. Open to view." />
+<meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630'%3E%3Crect width='1200' height='630' fill='%23000000'/%3E%3Crect x='400' y='200' width='400' height='230' rx='20' fill='%231C1C1E'/%3E%3Ccircle cx='600' cy='280' r='50' fill='%23333333' filter='url(%23blur)'/%3E%3Cdefs%3E%3Cfilter id='blur'%3E%3CfeGaussianBlur stdDeviation='15'/%3E%3C/filter%3E%3C/defs%3E%3Ctext x='600' y='400' font-family='Arial' font-size='24' fill='%23FFFFFF' text-anchor='middle'%3ESecure Photo%3C/text%3E%3C/svg%3E" />
+<meta property="og:url" content="${req.headers.host || 'sp.keybo.ai'}/view?token=${token}" />
+<meta property="og:type" content="website" />
+<!-- Twitter Card meta tags -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Secure Photo - Keybo" />
+<meta name="twitter:description" content="A secure photo has been shared with you. Open to view." />
+<meta name="twitter:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630'%3E%3Crect width='1200' height='630' fill='%23000000'/%3E%3Crect x='400' y='200' width='400' height='230' rx='20' fill='%231C1C1E'/%3E%3Ccircle cx='600' cy='280' r='50' fill='%23333333' filter='url(%23blur)'/%3E%3Cdefs%3E%3Cfilter id='blur'%3E%3CfeGaussianBlur stdDeviation='15'/%3E%3C/filter%3E%3C/defs%3E%3Ctext x='600' y='400' font-family='Arial' font-size='24' fill='%23FFFFFF' text-anchor='middle'%3ESecure Photo%3C/text%3E%3C/svg%3E" />
 <style>
 :root {
   --primary: #007AFF;
