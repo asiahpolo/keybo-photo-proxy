@@ -13,6 +13,17 @@ function detectBot(userAgent) {
     /com\.apple\.WebKit\.Networking/i, /LinkPreview/i,
     /Googlebot/i, /Bingbot/i, /YandexBot/i, /DuckDuckBot/i,
     /crawler/i, /spider/i, /scraper/i, /preview/i, /unfurl/i, /embed/i, /thumbnail/i,
+    /WhatsApp\/2/i, /WhatsApp\/[0-9]/i,  // WhatsApp mobile app
+    /MicroMessenger/i,  // WeChat
+    /Viber/i,  // Viber
+    /Line/i,  // Line
+    /Messenger/i,  // Facebook Messenger
+    /Snapchat/i,  // Snapchat
+    /Instagram/i,  // Instagram
+    /Twitter/i,  // Twitter app
+    /FB_IAB/i,  // Facebook in-app browser
+    /FBAN/i,  // Facebook app
+    /FBAV/i,  // Facebook app
   ];
   return botPatterns.some(p => p.test(userAgent));
 }
