@@ -68,6 +68,26 @@ export default async function handler(req, res) {
     const isBot = detectBot(userAgent);
     const now = new Date();
 
+    // If this is a bot/link preview scraper, return simple page without photo
+    if (isBot) {
+      console.log('[VIEW] Bot detected, serving simple page without photo');
+      const simpleHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Photo - Keybo</title>
+</head>
+<body style="background:#000;color:#fff;text-align:center;padding:50px;font-family:-apple-system,sans-serif">
+<h1>Secure Photo</h1>
+<p>A secure photo has been shared with you.</p>
+<p>Open this link in your browser to view.</p>
+</body>
+</html>`;
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(simpleHtml);
+    }
+
     // First-open logic: record when a human first opens the link
     if (!isDemo && !share.first_opened_at && !isBot) {
       await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?id=eq.${share.id}`, {
