@@ -159,10 +159,16 @@ export default async function handler(req, res) {
 <meta property="og:description" content="A secure photo has been shared with you. Open to view." />
 <meta property="og:url" content="${req.headers.host ? 'https://' + req.headers.host : 'https://sp.keybo.ai'}/view?token=${token}" />
 <meta property="og:type" content="website" />
+<meta property="og:image" content="" />
 <!-- Twitter Card meta tags - no image preview -->
 <meta name="twitter:card" content="summary" />
 <meta name="twitter:title" content="Secure Photo - Keybo" />
 <meta name="twitter:description" content="A secure photo has been shared with you. Open to view." />
+<meta name="twitter:image" content="" />
+<!-- Prevent link preview scrapers -->
+<meta name="robots" content="noindex, nofollow, noimageindex" />
+<meta name="googlebot" content="noindex, nofollow, noimageindex" />
+<meta name="twitter:widgets:csp" content="on" />
 <style>
 :root {
   --primary: #007AFF;
