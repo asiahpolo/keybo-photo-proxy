@@ -215,19 +215,10 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=3600');
     
-    // If this is a bot/link preview scraper, serve a blurred version
+    // If this is a bot/link preview scraper, return 403 to prevent preview
     if (isBot) {
-      try {
-        const blurredBuffer = await sharp(Buffer.from(photoBuffer))
-          .blur(20)
-          .toBuffer();
-        res.setHeader('Content-Length', blurredBuffer.byteLength);
-        return res.send(blurredBuffer);
-      } catch (blurError) {
-        console.error('[PHOTO] Blur failed, serving original:', blurError);
-        res.setHeader('Content-Length', photoBuffer.byteLength);
-        return res.send(Buffer.from(photoBuffer));
-      }
+      console.log('[PHOTO] Bot detected, blocking image preview');
+      return res.status(403).json({ error: 'Preview not allowed' });
     }
 
     res.setHeader('Content-Length', photoBuffer.byteLength);
