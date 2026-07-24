@@ -134,7 +134,7 @@ export default async function handler(req, res) {
     let appLinkUrl = 'https://keybo.ai';
     const currentDate = new Date().toLocaleString();
     try {
-      const linkRes = await fetch(`${SUPABASE_URL}/rest/v1/app_links?select=url,link_type&limit=1`, {
+      const linkRes = await fetch(`${SUPABASE_URL}/rest/v1/app_links?link_type=eq.app_download&select=url,link_type&limit=1`, {
         headers: {
           Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
           apikey: SUPABASE_SERVICE_KEY,
