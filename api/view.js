@@ -123,17 +123,15 @@ export default async function handler(req, res) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Secure Photo - Keybo</title>
-<!-- Open Graph meta tags for link previews - use blurred placeholder -->
+<!-- Open Graph meta tags - no image preview -->
 <meta property="og:title" content="Secure Photo - Keybo" />
 <meta property="og:description" content="A secure photo has been shared with you. Open to view." />
-<meta property="og:image" content="${req.headers.host ? 'https://' + req.headers.host : 'https://sp.keybo.ai'}/api/photo-preview" />
 <meta property="og:url" content="${req.headers.host ? 'https://' + req.headers.host : 'https://sp.keybo.ai'}/view?token=${token}" />
 <meta property="og:type" content="website" />
-<!-- Twitter Card meta tags -->
-<meta name="twitter:card" content="summary_large_image" />
+<!-- Twitter Card meta tags - no image preview -->
+<meta name="twitter:card" content="summary" />
 <meta name="twitter:title" content="Secure Photo - Keybo" />
 <meta name="twitter:description" content="A secure photo has been shared with you. Open to view." />
-<meta name="twitter:image" content="${req.headers.host ? 'https://' + req.headers.host : 'https://sp.keybo.ai'}/api/photo-preview" />
 <style>
 :root {
   --primary: #007AFF;
