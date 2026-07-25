@@ -1,9 +1,9 @@
 // Vercel serverless function for photo viewing with reveal bar
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('[VIEW] Missing required environment variables: SUPABASE_URL, SUPABASE_SERVICE_KEY');
+if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+  console.error('[VIEW] Missing required environment variables: SUPABASE_URL, SUPABASE_SECRET_KEY');
 }
 
 function detectBot(userAgent) {
@@ -49,8 +49,8 @@ export default async function handler(req, res) {
     const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?or=(short_token.eq.${token},share_token.eq.${token})&select=photo_id,expires_at,is_active,first_opened_at,view_window_seconds,max_views,current_views,id`;
     const dbResponse = await fetch(dbUrl, {
       headers: {
-        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
+        'apikey': SUPABASE_SECRET_KEY,
         'Content-Type': 'application/json'
       }
     });
@@ -107,8 +107,8 @@ export default async function handler(req, res) {
       await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?id=eq.${share.id}`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-          'apikey': SUPABASE_SERVICE_KEY,
+          'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
+          'apikey': SUPABASE_SECRET_KEY,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ first_opened_at: now.toISOString() }),
@@ -136,8 +136,8 @@ export default async function handler(req, res) {
     try {
       const linkRes = await fetch(`${SUPABASE_URL}/rest/v1/app_links?link_type=eq.app_download&select=url,link_type&limit=1`, {
         headers: {
-          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-          apikey: SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
+          apikey: SUPABASE_SECRET_KEY,
           'Content-Type': 'application/json',
         },
       });

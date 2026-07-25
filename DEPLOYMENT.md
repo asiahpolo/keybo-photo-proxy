@@ -97,10 +97,8 @@ vercel deploy --prod
 
 ## Environment Variables
 
-No additional environment variables needed. The API uses:
-- `SUPABASE_URL`: Hardcoded in `api/view.js`
-- `SUPABASE_ANON_KEY`: Hardcoded in `api/view.js`
+Required environment variables:
+- `SUPABASE_URL`: Your Supabase project URL
+- `SUPABASE_SECRET_KEY`: Your new rotatable Supabase secret key (first tab in dashboard)
 
-If you want to use environment variables instead:
-1. Add to Vercel project settings
-2. Update `api/view.js` to use `process.env.SUPABASE_URL`
+Set these in your Vercel project settings. Both `api/view.js` and `api/photo.js` read from `process.env`.

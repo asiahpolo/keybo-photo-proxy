@@ -5,18 +5,18 @@ import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
 let supabase = null;
 function getSupabase() {
   if (!supabase) {
-    supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
   }
   return supabase;
 }
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('[PHOTO] Missing required environment variables: SUPABASE_URL, SUPABASE_SERVICE_KEY');
+if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+  console.error('[PHOTO] Missing required environment variables: SUPABASE_URL, SUPABASE_SECRET_KEY');
 }
 
 function detectBot(userAgent) {
@@ -76,8 +76,8 @@ export default async function handler(req, res) {
     
     const dbResponse = await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?${query}&select=photo_id,expires_at,first_opened_at,view_window_seconds,max_views,current_views,id,is_active`, {
       headers: {
-        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
+        'apikey': SUPABASE_SECRET_KEY,
         'Content-Type': 'application/json'
       }
     });
@@ -117,8 +117,8 @@ export default async function handler(req, res) {
       await fetch(`${SUPABASE_URL}/rest/v1/photo_shares?id=eq.${share.id}`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-          'apikey': SUPABASE_SERVICE_KEY,
+          'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
+          'apikey': SUPABASE_SECRET_KEY,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ first_opened_at: now.toISOString() }),
@@ -147,8 +147,8 @@ export default async function handler(req, res) {
     console.log(`[PHOTO] Looking up photo with ID: ${share.photo_id}`);
     const photoResponse = await fetch(`${SUPABASE_URL}/rest/v1/photos?id=eq.${share.photo_id}&select=storage_path`, {
       headers: {
-        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
+        'apikey': SUPABASE_SECRET_KEY,
         'Content-Type': 'application/json'
       }
     });
