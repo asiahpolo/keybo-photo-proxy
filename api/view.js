@@ -32,6 +32,7 @@ function detectBot(userAgent) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   const { token } = req.query;
   if (!token) {
     return res.status(400).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px">Token required</body></html>');
@@ -46,7 +47,7 @@ export default async function handler(req, res) {
     // Render THIS file's own viewer template (the latest UI: Get Keybo App CTA, "One-time view
     // only", expiry pill, richer reveal). We intentionally do NOT proxy the Supabase edge function
     // here — its HTML is an older, stripped-down viewer, and proxying it is what regressed the UI.
-    const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?or=(short_token.eq.${token},share_token.eq.${token})&select=photo_id,expires_at,is_active,first_opened_at,view_window_seconds,max_views,current_views,id`;
+    const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?or=(short_token.eq.${resolvedToken},share_token.eq.${resolvedToken})&select=photo_id,expires_at,is_active,first_opened_at,view_window_seconds,max_views,current_views,id`;
     const dbResponse = await fetch(dbUrl, {
       headers: {
         'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
@@ -76,6 +77,20 @@ export default async function handler(req, res) {
 
     if (!isDemo && share.current_views >= share.max_views) {
       return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link view limit exceeded</p></body></html>');
+    }
+
+    const expiryFor = (row) => isDemo ? null : Math.min(
+      row.first_opened_at ? new Date(row.first_opened_at).getTime() + (row.view_window_seconds || 60) * 1000 : Infinity,
+      row.expires_at ? new Date(row.expires_at).getTime() : Infinity
+    );
+    // Read-only revalidation: never restart the viewing window on resume.
+    if (req.query.status === '1') {
+      const expiresAt = expiryFor(share);
+      const serverNow = Date.now();
+      if (!isDemo && (!Number.isFinite(expiresAt) || serverNow >= expiresAt)) {
+        return res.status(410).json({ expired: true });
+      }
+      return res.json({ expiresAt, serverNow });
     }
 
     const userAgent = req.headers['user-agent'] || 'unknown';
@@ -131,25 +146,9 @@ export default async function handler(req, res) {
       return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link has expired</p></body></html>');
     }
 
-    let appLinkUrl = 'https://keybo.ai';
+    const appLinkUrl = 'https://apps.apple.com/us/app/keybo-ai-translate-reply/id6773636811';
     const currentDate = new Date().toLocaleString();
-    try {
-      const linkRes = await fetch(`${SUPABASE_URL}/rest/v1/app_links?link_type=eq.app_download&select=url,link_type&limit=1`, {
-        headers: {
-          Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
-          apikey: SUPABASE_SECRET_KEY,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (linkRes.ok) {
-        const links = await linkRes.json();
-        if (links.length > 0 && links[0].url) {
-          appLinkUrl = links[0].url;
-        }
-      }
-    } catch (e) {
-      console.error('[VIEW] Failed to fetch app link:', e);
-    }
+    const expiresAt = expiryFor(share);
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -209,7 +208,8 @@ body, html {
   background: rgba(0,0,0,0.5);
   backdrop-filter: blur(10px);
 }
-.brand { font-weight: 700; font-size: 20px; letter-spacing: -0.5px; color: var(--primary); }
+.brand { display: flex; align-items: center; gap: 9px; text-decoration: none; font-weight: 700; font-size: 20px; letter-spacing: -0.5px; color: var(--primary); }
+.brand svg { flex-shrink: 0; filter: brightness(0) invert(1); }
 .timer-container {
   display: flex; align-items: center; gap: 8px;
   background: rgba(255,255,255,0.1);
@@ -356,7 +356,42 @@ body, html {
 <body>
 <div class="main-container">
   <header class="header">
-    <div class="brand">keybo.ai</div>
+    <a class="brand" href="https://keybo.ai" aria-label="Keybo home"><svg width="32" height="32" aria-hidden="true" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wheels -->
+  <circle cx="35" cy="102" r="9" fill="#0F172A" />
+  <circle cx="35" cy="102" r="3" fill="#FFFFFF" />
+  <circle cx="85" cy="102" r="9" fill="#0F172A" />
+  <circle cx="85" cy="102" r="3" fill="#FFFFFF" />
+
+  <!-- Handle Poles -->
+  <rect x="42" y="21" width="6" height="14" fill="#0F172A" />
+  <rect x="72" y="21" width="6" height="14" fill="#0F172A" />
+
+  <!-- Handle Grip -->
+  <rect x="34" y="13" width="52" height="10" rx="5" fill="#0F172A" />
+
+  <!-- Luggage Body / Keyboard Box -->
+  <rect x="18" y="35" width="84" height="62" rx="10" fill="none" stroke="#0F172A" stroke-width="4" />
+
+  <!-- Top Row Keys -->
+  <rect x="27" y="45" width="10" height="10" rx="2" fill="#0F172A" />
+  <rect x="41" y="45" width="10" height="10" rx="2" fill="#0F172A" />
+  <rect x="55" y="45" width="10" height="10" rx="2" fill="#0F172A" />
+  <rect x="69" y="45" width="10" height="10" rx="2" fill="#0F172A" />
+  <rect x="83" y="45" width="10" height="10" rx="2" fill="#0F172A" />
+
+  <!-- Middle Row Keys -->
+  <rect x="34" y="59" width="10" height="10" rx="2" fill="#0F172A" />
+  <rect x="48" y="59" width="10" height="10" rx="2" fill="#0F172A" />
+  <rect x="62" y="59" width="10" height="10" rx="2" fill="#0F172A" />
+  <rect x="76" y="59" width="10" height="10" rx="2" fill="#0F172A" />
+
+  <!-- Bottom Row Keys -->
+  <rect x="28" y="73" width="12" height="10" rx="2" fill="#64748B" />
+  <rect x="44" y="73" width="32" height="10" rx="2" fill="#1B3A9E" />
+  <rect x="80" y="73" width="12" height="10" rx="2" fill="#64748B" />
+</svg>
+<span>Keybo</span></a>
     <div class="timer-container">
       <div class="timer-icon"></div>
       <div id="timer">60s</div>
@@ -381,7 +416,7 @@ body, html {
   </main>
 
   <footer class="watermark">
-    <a href="${appLinkUrl}" target="_blank" class="download-btn">
+    <a href="${appLinkUrl}" target="_blank" rel="noopener noreferrer" class="download-btn">
       <span>Get Keybo App</span>
     </a>
     <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate}</div>
@@ -390,9 +425,9 @@ body, html {
   <div class="expired-overlay" id="expiredOverlay">
     <div class="expired-icon">&#128274;</div>
     <div class="expired-title">Link Expired</div>
-    <div class="expired-subtitle">This secure photo has been permanently deleted for your protection.</div>
+    <div class="expired-subtitle">This photo link has expired and is no longer accessible.</div>
     <br><br>
-    <a href="${appLinkUrl}" target="_blank" class="download-btn">Get Keybo App</a>
+    <a href="${appLinkUrl}" target="_blank" rel="noopener noreferrer" class="download-btn">Get Keybo App</a>
   </div>
 </div>
 
@@ -412,7 +447,55 @@ body, html {
 
   let isDragging = false;
   let hasDraggedOnce = false;
-  let timeLeft = 60;
+  const serverExpiry = ${JSON.stringify(expiresAt)};
+  let deadline = serverExpiry === null ? null : Date.now() + Math.max(0, serverExpiry - ${Date.now()});
+  let expired = false;
+  let checking = false;
+  let countdown;
+  function expirePhoto() {
+    expired = true;
+    clearInterval(countdown);
+    photo.style.visibility = 'hidden';
+    photo.removeAttribute('src');
+    revealBar.style.display = 'none';
+    expiredOverlay.style.display = 'flex';
+    infoOverlay.style.display = 'none';
+    dragHint.style.display = 'none';
+    timerLabel.textContent = '0s';
+    expiryLabel.textContent = 'Link expired';
+  }
+  function checkClock() {
+    if (expired) return false;
+    if (deadline === null) {
+      timerLabel.textContent = 'Demo';
+      expiryLabel.textContent = 'Demo · no expiry';
+      return true;
+    }
+    const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    if (!remaining) { expirePhoto(); return false; }
+    timerLabel.textContent = remaining + 's';
+    expiryLabel.textContent = 'Link expires in ' + remaining + 's';
+    return true;
+  }
+  async function revalidate() {
+    photo.style.visibility = 'hidden';
+    if (!checkClock() || checking || document.hidden) return;
+    checking = true;
+    const started = Date.now();
+    try {
+      const response = await fetch('/api/view?token=' + encodeURIComponent(${JSON.stringify(String(token))}) + '&status=1', { cache: 'no-store' });
+      if (response.status === 404 || response.status === 410) { expirePhoto(); return; }
+      if (!response.ok) throw new Error('Status unavailable');
+      const status = await response.json();
+      if (deadline !== null) {
+        if (!Number.isFinite(status.expiresAt) || !Number.isFinite(status.serverNow)) throw new Error('Invalid expiry');
+        deadline = Math.min(deadline, started + Math.max(0, status.expiresAt - status.serverNow));
+      }
+      if (checkClock() && !document.hidden) photo.style.visibility = 'visible';
+    } catch {
+      expiryLabel.textContent = 'Reconnect to verify this link';
+    } finally { checking = false; }
+  }
 
   function updateReveal(clientY) {
     const rect = container.getBoundingClientRect();
@@ -519,17 +602,8 @@ body, html {
     }, 2000);
   })();
 
-  const countdown = setInterval(() => {
-    timeLeft--;
-    const display = timeLeft + 's';
-    timerLabel.textContent = display;
-    expiryLabel.textContent = 'Link expires in ' + display;
-    if (timeLeft <= 0) {
-      clearInterval(countdown);
-      expiredOverlay.style.display = 'flex';
-      infoOverlay.style.display = 'none';
-    }
-  }, 1000);
+  countdown = setInterval(checkClock, 1000);
+  checkClock();
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'PrintScreen' || 
@@ -542,12 +616,13 @@ body, html {
   });
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      photo.style.opacity = '0';
-    } else {
-      photo.style.opacity = '1';
-    }
+    if (document.hidden) photo.style.visibility = 'hidden';
+    else revalidate();
   });
+  window.addEventListener('pagehide', () => { photo.style.visibility = 'hidden'; });
+  window.addEventListener('pageshow', revalidate);
+  window.addEventListener('focus', revalidate);
+  window.addEventListener('online', revalidate);
 </script>
 </body>
 </html>`;
