@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     return res.status(400).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px">Token required</body></html>');
   }
 
-  const normalizedToken = String(token).trim().toLowerCase();
+  const normalizedToken = String(token).trim();
   const resolvedToken = normalizedToken === 'demo'
     ? 'demo-share-token-fixed-non-expiring'
     : normalizedToken === 'demo-full' ? 'demo-share-token-fixed-full' : normalizedToken;
