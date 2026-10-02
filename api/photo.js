@@ -61,14 +61,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Token required' });
   }
 
-  const isDemo = token === 'demo' || token === 'demo-share-token-fixed-non-expiring';
+  const isDemo = token === 'demo' || token === 'demo-share-token-fixed-non-expiring' || token === 'demo-full' || token === 'demo-share-token-fixed-full';
   const DEMO_PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="100%" height="100%" fill="#111"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="48" font-family="sans-serif">Demo Photo</text></svg>`;
 
   try {
     console.log(`[PHOTO] Token: ${token}, Length: ${token.length}`);
     
     // Query database to find photo by either short_token or share_token
-    const query = token.length <= 6 
+    const query = token.length <= 6 || token === 'demo-full'
       ? `short_token=eq.${token}`
       : `share_token=eq.${token}`;
     

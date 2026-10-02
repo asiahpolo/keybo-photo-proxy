@@ -34,7 +34,6 @@ function detectBot(userAgent) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   const { token } = req.query;
-  const fullPhoto = req.query.mode === 'full';
   if (!token) {
     return res.status(400).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px">Token required</body></html>');
   }
@@ -42,13 +41,13 @@ export default async function handler(req, res) {
   const normalizedToken = String(token).trim().toLowerCase();
   const resolvedToken = normalizedToken === 'demo'
     ? 'demo-share-token-fixed-non-expiring'
-    : normalizedToken;
+    : normalizedToken === 'demo-full' ? 'demo-share-token-fixed-full' : normalizedToken;
 
   try {
     // Render THIS file's own viewer template (the latest UI: Get Keybo App CTA, "One-time view
     // only", expiry pill, richer reveal). We intentionally do NOT proxy the Supabase edge function
     // here — its HTML is an older, stripped-down viewer, and proxying it is what regressed the UI.
-    const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?or=(short_token.eq.${resolvedToken},share_token.eq.${resolvedToken})&select=photo_id,expires_at,is_active,first_opened_at,view_window_seconds,max_views,current_views,id`;
+    const dbUrl = `${SUPABASE_URL}/rest/v1/photo_shares?or=(short_token.eq.${resolvedToken},share_token.eq.${resolvedToken})&select=presentation_mode,photo_id,expires_at,is_active,first_opened_at,view_window_seconds,max_views,current_views,id`;
     const dbResponse = await fetch(dbUrl, {
       headers: {
         'Authorization': `Bearer ${SUPABASE_SECRET_KEY}`,
@@ -67,10 +66,11 @@ export default async function handler(req, res) {
     }
 
     const share = shares[0];
+    const fullPhoto = share.presentation_mode === 'full';
 
     // The demo link (sp.keybo.ai/demo) is a permanent showcase — it must never expire,
     // never hit the view cap, and never record first_opened_at. Mirrors the edge function.
-    const isDemo = normalizedToken === 'demo' || share.short_token === 'demo';
+    const isDemo = normalizedToken === 'demo' || share.short_token === 'demo' || share.short_token === 'demo-full' || normalizedToken === 'demo-full';
 
     if (!share.is_active) {
       return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link is no longer active</p></body></html>');
