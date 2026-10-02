@@ -34,6 +34,7 @@ function detectBot(userAgent) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   const { token } = req.query;
+  const fullPhoto = req.query.mode === 'full';
   if (!token) {
     return res.status(400).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px">Token required</body></html>');
   }
@@ -436,6 +437,7 @@ body, html {
   document.addEventListener('dragstart', e => e.preventDefault());
 
   const photo = document.getElementById('photo');
+  const fullPhoto = ${fullPhoto};
   const revealBar = document.getElementById('revealBar');
   const container = document.getElementById('photoContainer');
   const timerLabel = document.getElementById('timer');
@@ -557,6 +559,12 @@ body, html {
     }, 300);
   }
 
+  if (fullPhoto) {
+    photo.style.clipPath = 'none';
+    revealBar.style.display = 'none';
+    infoOverlay.style.display = 'none';
+    dragHint.style.display = 'none';
+  } else {
   window.addEventListener('mousedown', handleStart);
   window.addEventListener('mousemove', handleMove);
   window.addEventListener('mouseup', handleEnd);
@@ -602,6 +610,7 @@ body, html {
     }, 2000);
   })();
 
+  }
   countdown = setInterval(checkClock, 1000);
   checkClock();
 
