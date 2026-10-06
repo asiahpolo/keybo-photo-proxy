@@ -31,11 +31,52 @@ function detectBot(userAgent) {
   return botPatterns.some(p => p.test(userAgent));
 }
 
+const APP_STORE_URL = 'https://apps.apple.com/us/app/keybo-ai-translate-reply/id6773636811';
+
+function expiredPage(title, message) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>${title} - Keybo</title>
+<meta name="robots" content="noindex, nofollow, noimageindex" />
+<style>
+:root { --bg:#000; --primary:#007AFF; --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+body, html { margin:0; padding:0; width:100%; height:100%; background:var(--bg); color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+.main-container { display:flex; flex-direction:column; width:100%; height:100%; padding-top:var(--safe-top); padding-bottom:var(--safe-bottom); box-sizing:border-box; }
+.header { position:relative; z-index:1100; padding:16px; display:flex; align-items:center; background:rgba(0,0,0,0.5); }
+.brand { display:flex; align-items:center; gap:9px; text-decoration:none; font-weight:700; font-size:20px; letter-spacing:-0.5px; color:var(--primary); }
+.photo-area { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:40px 24px; }
+.expired-title { font-size:24px; font-weight:700; margin:0 0 12px; }
+.expired-subtitle { font-size:16px; color:rgba(255,255,255,0.6); line-height:1.5; margin:0; }
+.watermark { margin-top:auto; padding:24px; text-align:center; }
+.download-btn { display:inline-flex; align-items:center; background:#1C1C1E; color:#fff; text-decoration:none; padding:12px 24px; border-radius:12px; font-weight:600; font-size:15px; border:1px solid rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+<div class="main-container">
+  <header class="header">
+    <a class="brand" href="https://keybo.ai">Keybo</a>
+  </header>
+  <main class="photo-area">
+    <h1 class="expired-title">${title}</h1>
+    <p class="expired-subtitle">${message}</p>
+  </main>
+  <footer class="watermark">
+    <a href="${APP_STORE_URL}" class="download-btn">Get Keybo App</a>
+  </footer>
+</div>
+</body>
+</html>`;
+}
+
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   const { token } = req.query;
   if (!token) {
-    return res.status(400).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px">Token required</body></html>');
+    return res.status(400).send(expiredPage('Secure Photo', 'Token required'));
   }
 
   const normalizedToken = String(token).trim();
@@ -57,12 +98,12 @@ export default async function handler(req, res) {
     });
 
     if (!dbResponse.ok) {
-      return res.status(404).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Photo Not Found</h1><p>This link may have expired or is invalid</p></body></html>');
+      return res.status(404).send(expiredPage('Photo Not Found', 'This link may have expired or is invalid'));
     }
 
     const shares = await dbResponse.json();
     if (!shares || shares.length === 0) {
-      return res.status(404).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Photo Not Found</h1><p>This link may have expired or is invalid</p></body></html>');
+      return res.status(404).send(expiredPage('Photo Not Found', 'This link may have expired or is invalid'));
     }
 
     const share = shares[0];
@@ -73,11 +114,11 @@ export default async function handler(req, res) {
     const isDemo = normalizedToken === 'demo' || share.short_token === 'demo' || share.short_token === 'demo-full' || normalizedToken === 'demo-full';
 
     if (!share.is_active) {
-      return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link is no longer active</p></body></html>');
+      return res.status(410).send(expiredPage('Link Expired', 'This photo link is no longer active'));
     }
 
     if (!isDemo && share.current_views >= share.max_views) {
-      return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link view limit exceeded</p></body></html>');
+      return res.status(410).send(expiredPage('Link Expired', 'This photo link view limit exceeded'));
     }
 
     const expiryFor = (row) => isDemo ? null : Math.min(
@@ -138,13 +179,13 @@ export default async function handler(req, res) {
       const windowSeconds = share.view_window_seconds || 60;
       const effectiveExpiry = new Date(firstOpened.getTime() + windowSeconds * 1000);
       if (now > effectiveExpiry) {
-        return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link has expired</p></body></html>');
+        return res.status(410).send(expiredPage('Link Expired', 'This photo link has expired'));
       }
     }
 
     // Hard cap from expires_at
     if (!isDemo && share.expires_at && new Date(share.expires_at) < now) {
-      return res.status(410).send('<html><body style="background:#000;color:#fff;text-align:center;padding:50px"><h1>Link Expired</h1><p>This photo link has expired</p></body></html>');
+      return res.status(410).send(expiredPage('Link Expired', 'This photo link has expired'));
     }
 
     const appLinkUrl = 'https://apps.apple.com/us/app/keybo-ai-translate-reply/id6773636811';
@@ -201,11 +242,12 @@ body, html {
   box-sizing: border-box;
 }
 .header {
+  position: relative;
   padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  z-index: 100;
+  z-index: 1100;
   background: rgba(0,0,0,0.5);
   backdrop-filter: blur(10px);
 }
@@ -340,7 +382,7 @@ body, html {
   position: absolute; inset: 0; background: #000;
   display: none; flex-direction: column;
   justify-content: center; align-items: center;
-  z-index: 1000; padding: 40px; text-align: center;
+  z-index: 20; padding: 40px; text-align: center;
 }
 .expired-icon { font-size: 48px; margin-bottom: 24px; }
 .expired-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
@@ -414,6 +456,13 @@ body, html {
       <div class="status-pill expiry" id="expiryPill">Link expires in 60s</div>
       <div class="status-pill">One-time view only</div>
     </div>
+  <div class="expired-overlay" id="expiredOverlay">
+    <div class="expired-icon">&#128274;</div>
+    <div class="expired-title">Link Expired</div>
+    <div class="expired-subtitle">This photo link has expired and is no longer accessible.</div>
+    <br><br>
+    <a href="${appLinkUrl}" target="_blank" rel="noopener noreferrer" class="download-btn">Get Keybo App</a>
+  </div>
   </main>
 
   <footer class="watermark">
@@ -423,13 +472,6 @@ body, html {
     <div class="footer-text">Securely shared via keybo.ai &bull; ${currentDate}</div>
   </footer>
 
-  <div class="expired-overlay" id="expiredOverlay">
-    <div class="expired-icon">&#128274;</div>
-    <div class="expired-title">Link Expired</div>
-    <div class="expired-subtitle">This photo link has expired and is no longer accessible.</div>
-    <br><br>
-    <a href="${appLinkUrl}" target="_blank" rel="noopener noreferrer" class="download-btn">Get Keybo App</a>
-  </div>
 </div>
 
 <script>
