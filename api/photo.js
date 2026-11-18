@@ -21,25 +21,12 @@ if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
 
 function detectBot(userAgent) {
   const botPatterns = [
-    /facebookexternalhit/i, /Twitterbot/i, /LinkedInBot/i, /WhatsApp/i,
+    /facebookexternalhit/i, /Twitterbot/i, /LinkedInBot/i,
     /TelegramBot/i, /SkypeUriPreview/i, /Slackbot/i, /DiscordBot/i,
     /com\.apple\.WebKit\.Networking/i, /LinkPreview/i,
     /Googlebot/i, /Bingbot/i, /YandexBot/i, /DuckDuckBot/i,
     /crawler/i, /spider/i, /scraper/i, /preview/i, /unfurl/i, /embed/i, /thumbnail/i,
-    /WhatsApp/i,  // WhatsApp (all versions)
-    /MicroMessenger/i,  // WeChat
-    /Viber/i,  // Viber
-    /Line/i,  // Line
-    /Messenger/i,  // Facebook Messenger
-    /Snapchat/i,  // Snapchat
-    /Instagram/i,  // Instagram
-    /Twitter/i,  // Twitter app
-    /FB_IAB/i,  // Facebook in-app browser
-    /FBAN/i,  // Facebook app
-    /FBAV/i,  // Facebook app
-    /Telegram/i,  // Telegram app
-    /VK/i,  // VKontakte
-    /Kakao/i,  // KakaoTalk
+    // App-branded in-app browsers are real viewers, not crawlers.
   ];
   return botPatterns.some(p => p.test(userAgent));
 }
